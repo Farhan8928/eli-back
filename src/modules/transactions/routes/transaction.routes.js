@@ -2,8 +2,8 @@ const express = require("express");
 const { TransactionController } = require("../controllers/transaction.controller");
 const { authGuard } = require("../../../common/middleware/auth.middleware");
 const { roleGuard } = require("../../../common/middleware/role.middleware");
-const { validate } = require("../../../common/middleware/validate.middleware");
-const { createTransactionDto } = require("../dto/transaction.dto");
+const { validateRequest } = require("../../../middlewares/validateRequest");
+const { transactionCreateManualSchema } = require("../transaction.validation");
 const { asyncHandler } = require("../../../common/utils/asyncHandler");
 
 const transactionRoutes = express.Router();
@@ -15,7 +15,7 @@ transactionRoutes.get("/mine", roleGuard("client"), asyncHandler(transactionCont
 transactionRoutes.post(
   "/manual",
   roleGuard("superadmin"),
-  validate(createTransactionDto),
+  validateRequest(transactionCreateManualSchema),
   asyncHandler(transactionController.createManual)
 );
 

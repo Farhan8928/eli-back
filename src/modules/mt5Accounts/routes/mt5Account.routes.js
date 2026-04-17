@@ -3,8 +3,8 @@ const { Mt5AccountController } = require("../controllers/mt5Account.controller")
 const { asyncHandler } = require("../../../common/utils/asyncHandler");
 const { authGuard } = require("../../../common/middleware/auth.middleware");
 const { roleGuard } = require("../../../common/middleware/role.middleware");
-const { validate } = require("../../../common/middleware/validate.middleware");
-const { createMt5AccountDto, resetMt5PasswordDto } = require("../dto/createMt5Account.dto");
+const { validateRequest } = require("../../../middlewares/validateRequest");
+const { mt5CreateMineSchema, mt5ResetPasswordSchema } = require("../mt5Account.validation");
 
 const mt5AccountRoutes = express.Router();
 const mt5AccountController = new Mt5AccountController();
@@ -15,14 +15,14 @@ mt5AccountRoutes.get("/mine", roleGuard("client"), asyncHandler(mt5AccountContro
 mt5AccountRoutes.post(
   "/mine",
   roleGuard("client"),
-  validate(createMt5AccountDto),
+  validateRequest(mt5CreateMineSchema),
   asyncHandler(mt5AccountController.createMine)
 );
 
 mt5AccountRoutes.post(
   "/reset-password",
   roleGuard("superadmin"),
-  validate(resetMt5PasswordDto),
+  validateRequest(mt5ResetPasswordSchema),
   asyncHandler(mt5AccountController.resetPasswordByAdmin)
 );
 
