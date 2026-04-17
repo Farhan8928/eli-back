@@ -24,9 +24,7 @@ const toAdminAnalyticsDto = (payload) => ({
   totalWithdrawals: Number(payload?.totalWithdrawals || 0),
 });
 
-module.exports = {
-  toClientDto,
+export { toClientDto,
   toClientsListDto,
   toDeleteUserDto,
-  toAdminAnalyticsDto,
-};
+  toAdminAnalyticsDto, };

@@ -1,11 +1,11 @@
-const { apiResponse } = require("../../../common/utils/apiResponse");
-const { AdminService } = require("../services/admin.service");
-const {
+import { apiResponse } from "../../../common/utils/apiResponse.js";
+import { AdminService } from "../services/admin.service.js";
+import {
   toClientDto,
   toClientsListDto,
   toDeleteUserDto,
   toAdminAnalyticsDto,
-} = require("../dto/manageUser.dto");
+} from "../dto/manageUser.dto.js";
 
 const adminService = new AdminService();
 
@@ -59,4 +59,4 @@ const adminController = {
   },
 };
 
-module.exports = { adminController };
+export { adminController };

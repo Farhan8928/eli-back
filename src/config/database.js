@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const { logger } = require("./logger");
+import mongoose from "mongoose";
+import { logger } from "./logger.js";
 
 const connectDatabase = async (mongoUri) => {
   mongoose.set("strictQuery", true);
@@ -23,4 +23,4 @@ const connectDatabase = async (mongoUri) => {
   });
 };
 
-module.exports = { connectDatabase };
+export { connectDatabase };

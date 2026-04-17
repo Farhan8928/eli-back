@@ -1,10 +1,10 @@
-const { z } = require("zod");
-const {
+import { z } from "zod";
+import {
   objectIdSchema,
   pageSchema,
   limitSchema,
   emptyObjectPassthroughSchema,
-} = require("../../utils/validationPrimitives");
+} from "../../utils/validationPrimitives.js";
 
 const adminListClientsSchema = z.object({
   body: emptyObjectPassthroughSchema,
@@ -39,8 +39,6 @@ const adminDeleteUserSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-module.exports = {
-  adminListClientsSchema,
+export { adminListClientsSchema,
   adminUpdateUserSchema,
-  adminDeleteUserSchema,
-};
+  adminDeleteUserSchema, };

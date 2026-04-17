@@ -1,6 +1,6 @@
-const pino = require("pino");
-const { nodeEnv } = require("./env");
-const { requestContext } = require("../middlewares/requestContextProvider");
+import pino from "pino";
+import { nodeEnv } from "./env.js";
+import { requestContext } from "../middlewares/requestContextProvider.js";
 
 const logger = pino({
   level: nodeEnv === "production" ? "info" : "debug",
@@ -21,4 +21,4 @@ const logger = pino({
   timestamp: pino.stdTimeFunctions.isoTime,
 });
 
-module.exports = { logger };
+export { logger };

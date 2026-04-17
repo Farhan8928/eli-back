@@ -1,9 +1,9 @@
-const { apiResponse } = require("../../../common/utils/apiResponse");
-const { TransactionService } = require("../services/transaction.service");
-const {
+import { apiResponse } from "../../../common/utils/apiResponse.js";
+import { TransactionService } from "../services/transaction.service.js";
+import {
   toTransactionDto,
   toTransactionListDto,
-} = require("../dto/transaction.dto");
+} from "../dto/transaction.dto.js";
 
 const transactionService = new TransactionService();
 
@@ -32,4 +32,4 @@ const transactionController = {
   },
 };
 
-module.exports = { transactionController };
+export { transactionController };

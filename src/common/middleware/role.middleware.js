@@ -1,4 +1,4 @@
-const { AppError } = require("../errors/AppError");
+import { AppError } from "../errors/AppError.js";
 
 const roleGuard =
   (...allowedRoles) =>
@@ -10,4 +10,4 @@ const roleGuard =
     return next();
   };
 
-module.exports = { roleGuard };
+export { roleGuard };

@@ -1,12 +1,12 @@
-const axios = require("axios");
-const {
+import axios from "axios";
+import {
   mt5ServiceBaseUrl,
   mt5ServiceApiKey,
   mt5Login,
   mt5Password,
   mt5Server,
-} = require("../../config/env");
-const { AppError } = require("../../common/errors/AppError");
+} from "../../config/env.js";
+import { AppError } from "../../common/errors/AppError.js";
 
 class Mt5Client {
   constructor() {
@@ -78,4 +78,4 @@ class Mt5Client {
   }
 }
 
-module.exports = { Mt5Client };
+export { Mt5Client };

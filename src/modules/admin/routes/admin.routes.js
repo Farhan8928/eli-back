@@ -1,14 +1,14 @@
-const express = require("express");
-const { adminController } = require("../controllers/admin.controller");
-const { authGuard } = require("../../../common/middleware/auth.middleware");
-const { roleGuard } = require("../../../common/middleware/role.middleware");
-const { asyncHandler } = require("../../../common/utils/asyncHandler");
-const { validateRequest } = require("../../../middlewares/validateRequest");
-const {
+import express from "express";
+import { adminController } from "../controllers/admin.controller.js";
+import { authGuard } from "../../../common/middleware/auth.middleware.js";
+import { roleGuard } from "../../../common/middleware/role.middleware.js";
+import { asyncHandler } from "../../../common/utils/asyncHandler.js";
+import { validateRequest } from "../../../middlewares/validateRequest.js";
+import {
   adminListClientsSchema,
   adminUpdateUserSchema,
   adminDeleteUserSchema,
-} = require("../admin.validation");
+} from "../admin.validation.js";
 
 const adminRoutes = express.Router();
 
@@ -31,4 +31,4 @@ adminRoutes.delete(
 );
 adminRoutes.get("/analytics", asyncHandler(adminController.analytics));
 
-module.exports = { adminRoutes };
+export { adminRoutes };

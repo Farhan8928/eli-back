@@ -15,4 +15,4 @@ const toAuthLoginDto = (payload) => {
   };
 };
 
-module.exports = { toAuthLoginDto };
+export { toAuthLoginDto };

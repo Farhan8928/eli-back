@@ -10,4 +10,4 @@ const apiResponse = ({
   meta,
 });
 
-module.exports = { apiResponse };
+export { apiResponse };

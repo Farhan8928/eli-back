@@ -15,4 +15,4 @@ const toAuthRegisterDto = (payload) => {
   };
 };
 
-module.exports = { toAuthRegisterDto };
+export { toAuthRegisterDto };

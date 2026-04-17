@@ -1,5 +1,5 @@
-const { AsyncLocalStorage } = require("node:async_hooks");
-const { randomUUID } = require("node:crypto");
+import { AsyncLocalStorage } from "node:async_hooks";
+import { randomUUID } from "node:crypto";
 
 const requestContext = new AsyncLocalStorage();
 
@@ -21,7 +21,5 @@ const requestContextProvider = (req, res, next) => {
   });
 };
 
-module.exports = {
-  requestContext,
-  requestContextProvider,
-};
+export { requestContext,
+  requestContextProvider, };

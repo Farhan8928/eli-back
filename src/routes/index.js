@@ -1,12 +1,12 @@
-const express = require("express");
-const { authRoutes } = require("../modules/auth/routes/auth.routes");
-const {
+import express from "express";
+import { authRoutes } from "../modules/auth/routes/auth.routes.js";
+import {
   mt5AccountRoutes,
-} = require("../modules/mt5Accounts/routes/mt5Account.routes");
-const { adminRoutes } = require("../modules/admin/routes/admin.routes");
-const {
+} from "../modules/mt5Accounts/routes/mt5Account.routes.js";
+import { adminRoutes } from "../modules/admin/routes/admin.routes.js";
+import {
   transactionRoutes,
-} = require("../modules/transactions/routes/transaction.routes");
+} from "../modules/transactions/routes/transaction.routes.js";
 
 const router = express.Router();
 
@@ -15,4 +15,4 @@ router.use("/mt5-accounts", mt5AccountRoutes);
 router.use("/admin", adminRoutes);
 router.use("/transactions", transactionRoutes);
 
-module.exports = { router };
+export { router };

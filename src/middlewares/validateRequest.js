@@ -1,4 +1,4 @@
-const { AppError } = require("../common/errors/AppError");
+import { AppError } from "../common/errors/AppError.js";
 
 const validateRequest = (schema) => (req, _res, next) => {
   const result = schema.safeParse({
@@ -26,4 +26,4 @@ const validateRequest = (schema) => (req, _res, next) => {
   return next();
 };
 
-module.exports = { validateRequest };
+export { validateRequest };

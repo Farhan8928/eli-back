@@ -1,4 +1,4 @@
-const { z } = require("zod");
+import { z } from "zod";
 
 const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "Invalid id");
 
@@ -20,10 +20,8 @@ function emailSchema(message = "Invalid email") {
   return z.string().trim().toLowerCase().email(message);
 }
 
-module.exports = {
-  objectIdSchema,
+export { objectIdSchema,
   pageSchema,
   limitSchema,
   emptyObjectPassthroughSchema,
-  emailSchema,
-};
+  emailSchema, };

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const mt5AccountSchema = new mongoose.Schema(
   {
@@ -51,4 +51,4 @@ const mt5AccountSchema = new mongoose.Schema(
 
 const Mt5Account = mongoose.model("Mt5Account", mt5AccountSchema);
 
-module.exports = { Mt5Account };
+export { Mt5Account };

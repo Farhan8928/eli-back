@@ -1,9 +1,9 @@
-const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../../config/env");
-const { AppError } = require("../errors/AppError");
-const {
+import jwt from "jsonwebtoken";
+import { jwtSecret } from "../../config/env.js";
+import { AppError } from "../errors/AppError.js";
+import {
   UserRepository,
-} = require("../../modules/users/repositories/user.repository");
+} from "../../modules/users/repositories/user.repository.js";
 
 const userRepository = new UserRepository();
 
@@ -32,9 +32,9 @@ const authGuard = async (req, res, next) => {
     };
 
     return next();
-  } catch (_error) {
+  } catch {
     return next(new AppError("Invalid or expired token", 401, "TOKEN_INVALID"));
   }
 };
 
-module.exports = { authGuard };
+export { authGuard };

@@ -1,4 +1,4 @@
-const { Mt5Account } = require("../model/mt5Account.model");
+import { Mt5Account } from "../model/mt5Account.model.js";
 
 class Mt5AccountRepository {
   async create(payload) {
@@ -18,4 +18,4 @@ class Mt5AccountRepository {
   }
 }
 
-module.exports = { Mt5AccountRepository };
+export { Mt5AccountRepository };

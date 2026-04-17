@@ -1,4 +1,4 @@
-const { User } = require("../model/user.model");
+import { User } from "../model/user.model.js";
 
 class UserRepository {
   async create(payload) {
@@ -46,4 +46,4 @@ class UserRepository {
   }
 }
 
-module.exports = { UserRepository };
+export { UserRepository };

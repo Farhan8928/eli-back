@@ -1,7 +1,7 @@
-const { app } = require("./app");
-const { connectDatabase } = require("./config/database");
-const { mongoUri, port } = require("./config/env");
-const { logger } = require("./config/logger");
+import { app } from "./app.js";
+import { connectDatabase } from "./config/database.js";
+import { mongoUri, port } from "./config/env.js";
+import { logger } from "./config/logger.js";
 
 const startServer = async () => {
   await connectDatabase(mongoUri);

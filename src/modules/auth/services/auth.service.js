@@ -1,8 +1,8 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { jwtSecret, jwtExpiresIn } = require("../../../config/env");
-const { UserRepository } = require("../../users/repositories/user.repository");
-const { AppError } = require("../../../common/errors/AppError");
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { jwtSecret, jwtExpiresIn } from "../../../config/env.js";
+import { UserRepository } from "../../users/repositories/user.repository.js";
+import { AppError } from "../../../common/errors/AppError.js";
 
 class AuthService {
   constructor() {
@@ -76,4 +76,4 @@ class AuthService {
   }
 }
 
-module.exports = { AuthService };
+export { AuthService };

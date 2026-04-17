@@ -1,8 +1,8 @@
-const { z } = require("zod");
-const {
+import { z } from "zod";
+import {
   emptyObjectPassthroughSchema,
   objectIdSchema,
-} = require("../../utils/validationPrimitives");
+} from "../../utils/validationPrimitives.js";
 
 const transactionCreateManualSchema = z.object({
   body: z.object({
@@ -15,6 +15,4 @@ const transactionCreateManualSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-module.exports = {
-  transactionCreateManualSchema,
-};
+export { transactionCreateManualSchema, };

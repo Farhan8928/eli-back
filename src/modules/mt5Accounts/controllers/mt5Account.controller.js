@@ -1,10 +1,10 @@
-const { apiResponse } = require("../../../common/utils/apiResponse");
-const { Mt5AccountService } = require("../services/mt5Account.service");
-const {
+import { apiResponse } from "../../../common/utils/apiResponse.js";
+import { Mt5AccountService } from "../services/mt5Account.service.js";
+import {
   toMt5AccountListDto,
   toCreateMt5AccountDto,
   toResetMt5PasswordDto,
-} = require("../dto/createMt5Account.dto");
+} from "../dto/createMt5Account.dto.js";
 
 const mt5AccountService = new Mt5AccountService();
 
@@ -46,4 +46,4 @@ const mt5AccountController = {
   },
 };
 
-module.exports = { mt5AccountController };
+export { mt5AccountController };

@@ -1,5 +1,5 @@
-const { AppError } = require("./AppError");
-const { logger } = require("../../config/logger");
+import { AppError } from "./AppError.js";
+import { logger } from "../../config/logger.js";
 
 const errorHandler = (err, req, res, _next) => {
   let normalizedError = err;
@@ -26,4 +26,4 @@ const errorHandler = (err, req, res, _next) => {
   });
 };
 
-module.exports = { errorHandler };
+export { errorHandler };

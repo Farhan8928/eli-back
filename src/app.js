@@ -1,17 +1,17 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const pinoHttp = require("pino-http");
-const compression = require("compression");
-const rateLimit = require("express-rate-limit");
-const { clientOrigin } = require("./config/env");
-const { logger } = require("./config/logger");
-const { router: apiRouter } = require("./routes");
-const { notFound } = require("./common/middleware/notFound.middleware");
-const { errorHandler } = require("./common/errors/errorHandler");
-const {
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import pinoHttp from "pino-http";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
+import { clientOrigin } from "./config/env.js";
+import { logger } from "./config/logger.js";
+import { router as apiRouter } from "./routes.js";
+import { notFound } from "./common/middleware/notFound.middleware.js";
+import { errorHandler } from "./common/errors/errorHandler.js";
+import {
   requestContextProvider,
-} = require("./middlewares/requestContextProvider");
+} from "./middlewares/requestContextProvider.js";
 
 const app = express();
 
@@ -47,4 +47,4 @@ app.use("/api/v1", apiRouter);
 app.use(notFound);
 app.use(errorHandler);
 
-module.exports = { app };
+export { app };

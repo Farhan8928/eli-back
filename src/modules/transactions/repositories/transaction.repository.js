@@ -1,4 +1,4 @@
-const { Transaction } = require("../model/transaction.model");
+import { Transaction } from "../model/transaction.model.js";
 
 class TransactionRepository {
   async create(payload) {
@@ -10,4 +10,4 @@ class TransactionRepository {
   }
 }
 
-module.exports = { TransactionRepository };
+export { TransactionRepository };

@@ -1,15 +1,15 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   mt5AccountController,
-} = require("../controllers/mt5Account.controller");
-const { asyncHandler } = require("../../../common/utils/asyncHandler");
-const { authGuard } = require("../../../common/middleware/auth.middleware");
-const { roleGuard } = require("../../../common/middleware/role.middleware");
-const { validateRequest } = require("../../../middlewares/validateRequest");
-const {
+} from "../controllers/mt5Account.controller.js";
+import { asyncHandler } from "../../../common/utils/asyncHandler.js";
+import { authGuard } from "../../../common/middleware/auth.middleware.js";
+import { roleGuard } from "../../../common/middleware/role.middleware.js";
+import { validateRequest } from "../../../middlewares/validateRequest.js";
+import {
   mt5CreateMineSchema,
   mt5ResetPasswordSchema,
-} = require("../mt5Account.validation");
+} from "../mt5Account.validation.js";
 
 const mt5AccountRoutes = express.Router();
 
@@ -34,4 +34,4 @@ mt5AccountRoutes.post(
   asyncHandler(mt5AccountController.resetPasswordByAdmin),
 );
 
-module.exports = { mt5AccountRoutes };
+export { mt5AccountRoutes };

@@ -1,8 +1,8 @@
-const { AppError } = require("../../../common/errors/AppError");
-const { UserRepository } = require("../../users/repositories/user.repository");
-const { User } = require("../../users/model/user.model");
-const { Mt5Account } = require("../../mt5Accounts/model/mt5Account.model");
-const { Transaction } = require("../../transactions/model/transaction.model");
+import { AppError } from "../../../common/errors/AppError.js";
+import { UserRepository } from "../../users/repositories/user.repository.js";
+import { User } from "../../users/model/user.model.js";
+import { Mt5Account } from "../../mt5Accounts/model/mt5Account.model.js";
+import { Transaction } from "../../transactions/model/transaction.model.js";
 
 class AdminService {
   constructor() {
@@ -60,4 +60,4 @@ class AdminService {
   }
 }
 
-module.exports = { AdminService };
+export { AdminService };

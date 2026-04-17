@@ -1,7 +1,7 @@
-const { z } = require("zod");
-const {
+import { z } from "zod";
+import {
   emptyObjectPassthroughSchema,
-} = require("../../utils/validationPrimitives");
+} from "../../utils/validationPrimitives.js";
 
 const mt5CreateMineSchema = z.object({
   body: z.object({
@@ -23,7 +23,5 @@ const mt5ResetPasswordSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-module.exports = {
-  mt5CreateMineSchema,
-  mt5ResetPasswordSchema,
-};
+export { mt5CreateMineSchema,
+  mt5ResetPasswordSchema, };

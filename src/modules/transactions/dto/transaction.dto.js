@@ -13,7 +13,5 @@ const toTransactionDto = (tx) => ({
 const toTransactionListDto = (items) =>
   Array.isArray(items) ? items.map(toTransactionDto) : [];
 
-module.exports = {
-  toTransactionDto,
-  toTransactionListDto,
-};
+export { toTransactionDto,
+  toTransactionListDto, };

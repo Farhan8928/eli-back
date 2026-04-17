@@ -1,8 +1,8 @@
-const express = require("express");
-const { authController } = require("../controllers/auth.controller");
-const { validateRequest } = require("../../../middlewares/validateRequest");
-const { asyncHandler } = require("../../../common/utils/asyncHandler");
-const { authRegisterSchema, authLoginSchema } = require("../auth.validation");
+import express from "express";
+import { authController } from "../controllers/auth.controller.js";
+import { validateRequest } from "../../../middlewares/validateRequest.js";
+import { asyncHandler } from "../../../common/utils/asyncHandler.js";
+import { authRegisterSchema, authLoginSchema } from "../auth.validation.js";
 
 const authRoutes = express.Router();
 
@@ -17,4 +17,4 @@ authRoutes.post(
   asyncHandler(authController.login),
 );
 
-module.exports = { authRoutes };
+export { authRoutes };

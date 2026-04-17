@@ -1,8 +1,8 @@
-const { z } = require("zod");
-const {
+import { z } from "zod";
+import {
   emptyObjectPassthroughSchema,
   emailSchema,
-} = require("../../utils/validationPrimitives");
+} from "../../utils/validationPrimitives.js";
 
 const authRegisterSchema = z.object({
   body: z.object({
@@ -23,7 +23,5 @@ const authLoginSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-module.exports = {
-  authRegisterSchema,
-  authLoginSchema,
-};
+export { authRegisterSchema,
+  authLoginSchema, };

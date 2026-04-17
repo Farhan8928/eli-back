@@ -1,12 +1,12 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   transactionController,
-} = require("../controllers/transaction.controller");
-const { authGuard } = require("../../../common/middleware/auth.middleware");
-const { roleGuard } = require("../../../common/middleware/role.middleware");
-const { validateRequest } = require("../../../middlewares/validateRequest");
-const { transactionCreateManualSchema } = require("../transaction.validation");
-const { asyncHandler } = require("../../../common/utils/asyncHandler");
+} from "../controllers/transaction.controller.js";
+import { authGuard } from "../../../common/middleware/auth.middleware.js";
+import { roleGuard } from "../../../common/middleware/role.middleware.js";
+import { validateRequest } from "../../../middlewares/validateRequest.js";
+import { transactionCreateManualSchema } from "../transaction.validation.js";
+import { asyncHandler } from "../../../common/utils/asyncHandler.js";
 
 const transactionRoutes = express.Router();
 
@@ -24,4 +24,4 @@ transactionRoutes.post(
   asyncHandler(transactionController.createManual),
 );
 
-module.exports = { transactionRoutes };
+export { transactionRoutes };

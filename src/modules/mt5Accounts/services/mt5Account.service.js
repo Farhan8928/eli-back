@@ -1,9 +1,9 @@
-const { AppError } = require("../../../common/errors/AppError");
-const {
+import { AppError } from "../../../common/errors/AppError.js";
+import {
   Mt5AccountRepository,
-} = require("../repositories/mt5Account.repository");
-const { UserRepository } = require("../../users/repositories/user.repository");
-const { Mt5Client } = require("../../../integrations/mt5/mt5.client");
+} from "../repositories/mt5Account.repository.js";
+import { UserRepository } from "../../users/repositories/user.repository.js";
+import { Mt5Client } from "../../../integrations/mt5/mt5.client.js";
 
 class Mt5AccountService {
   constructor() {
@@ -99,4 +99,4 @@ class Mt5AccountService {
   }
 }
 
-module.exports = { Mt5AccountService };
+export { Mt5AccountService };

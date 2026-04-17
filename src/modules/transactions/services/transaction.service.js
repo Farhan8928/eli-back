@@ -1,8 +1,8 @@
-const { AppError } = require("../../../common/errors/AppError");
-const { UserRepository } = require("../../users/repositories/user.repository");
-const {
+import { AppError } from "../../../common/errors/AppError.js";
+import { UserRepository } from "../../users/repositories/user.repository.js";
+import {
   TransactionRepository,
-} = require("../repositories/transaction.repository");
+} from "../repositories/transaction.repository.js";
 
 class TransactionService {
   constructor() {
@@ -31,4 +31,4 @@ class TransactionService {
   }
 }
 
-module.exports = { TransactionService };
+export { TransactionService };

@@ -1,7 +1,7 @@
-const { apiResponse } = require("../../../common/utils/apiResponse");
-const { AuthService } = require("../services/auth.service");
-const { toAuthRegisterDto } = require("../dto/register.dto");
-const { toAuthLoginDto } = require("../dto/login.dto");
+import { apiResponse } from "../../../common/utils/apiResponse.js";
+import { AuthService } from "../services/auth.service.js";
+import { toAuthRegisterDto } from "../dto/register.dto.js";
+import { toAuthLoginDto } from "../dto/login.dto.js";
 
 const authService = new AuthService();
 
@@ -27,4 +27,4 @@ const authController = {
   },
 };
 
-module.exports = { authController };
+export { authController };
