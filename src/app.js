@@ -6,7 +6,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { clientOrigin } from "./config/env.js";
 import { logger } from "./config/logger.js";
-import { router as apiRouter } from "./routes.js";
+import { router as apiRouter } from "./routes/index.js";
 import { notFound } from "./common/middleware/notFound.middleware.js";
 import { errorHandler } from "./common/errors/errorHandler.js";
 import { requestContextProvider } from "./middlewares/requestContextProvider.js";
