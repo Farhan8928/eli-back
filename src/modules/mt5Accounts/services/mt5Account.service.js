@@ -16,14 +16,6 @@ class Mt5AccountService {
       throw new AppError("User not found", 404, "USER_NOT_FOUND");
     }
 
-    if (user.kycStatus !== "approved") {
-      throw new AppError(
-        "KYC must be approved before creating live account",
-        403,
-        "KYC_NOT_APPROVED",
-      );
-    }
-
     const mt5Result = await this.mt5Client.createAccount({
       userId: String(user._id),
       name: user.name,
