@@ -39,6 +39,4 @@ const adminDeleteUserSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-export { adminListClientsSchema,
-  adminUpdateUserSchema,
-  adminDeleteUserSchema, };
+export { adminListClientsSchema, adminUpdateUserSchema, adminDeleteUserSchema };

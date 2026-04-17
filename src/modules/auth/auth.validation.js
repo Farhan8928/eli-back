@@ -23,5 +23,4 @@ const authLoginSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-export { authRegisterSchema,
-  authLoginSchema, };
+export { authRegisterSchema, authLoginSchema };

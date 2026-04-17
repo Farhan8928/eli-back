@@ -9,9 +9,7 @@ import { logger } from "./config/logger.js";
 import { router as apiRouter } from "./routes.js";
 import { notFound } from "./common/middleware/notFound.middleware.js";
 import { errorHandler } from "./common/errors/errorHandler.js";
-import {
-  requestContextProvider,
-} from "./middlewares/requestContextProvider.js";
+import { requestContextProvider } from "./middlewares/requestContextProvider.js";
 
 const app = express();
 

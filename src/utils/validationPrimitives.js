@@ -20,8 +20,10 @@ function emailSchema(message = "Invalid email") {
   return z.string().trim().toLowerCase().email(message);
 }
 
-export { objectIdSchema,
+export {
+  objectIdSchema,
   pageSchema,
   limitSchema,
   emptyObjectPassthroughSchema,
-  emailSchema, };
+  emailSchema,
+};

@@ -21,5 +21,4 @@ const requestContextProvider = (req, res, next) => {
   });
 };
 
-export { requestContext,
-  requestContextProvider, };
+export { requestContext, requestContextProvider };

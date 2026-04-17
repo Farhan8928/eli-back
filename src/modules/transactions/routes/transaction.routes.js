@@ -1,7 +1,5 @@
 import express from "express";
-import {
-  transactionController,
-} from "../controllers/transaction.controller.js";
+import { transactionController } from "../controllers/transaction.controller.js";
 import { authGuard } from "../../../common/middleware/auth.middleware.js";
 import { roleGuard } from "../../../common/middleware/role.middleware.js";
 import { validateRequest } from "../../../middlewares/validateRequest.js";

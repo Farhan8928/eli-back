@@ -1,9 +1,7 @@
 import jwt from "jsonwebtoken";
 import { jwtSecret } from "../../config/env.js";
 import { AppError } from "../errors/AppError.js";
-import {
-  UserRepository,
-} from "../../modules/users/repositories/user.repository.js";
+import { UserRepository } from "../../modules/users/repositories/user.repository.js";
 
 const userRepository = new UserRepository();
 

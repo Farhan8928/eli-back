@@ -15,4 +15,4 @@ const transactionCreateManualSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-export { transactionCreateManualSchema, };
+export { transactionCreateManualSchema };

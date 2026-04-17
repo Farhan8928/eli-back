@@ -1,7 +1,5 @@
 import express from "express";
-import {
-  mt5AccountController,
-} from "../controllers/mt5Account.controller.js";
+import { mt5AccountController } from "../controllers/mt5Account.controller.js";
 import { asyncHandler } from "../../../common/utils/asyncHandler.js";
 import { authGuard } from "../../../common/middleware/auth.middleware.js";
 import { roleGuard } from "../../../common/middleware/role.middleware.js";

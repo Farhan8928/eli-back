@@ -1,7 +1,5 @@
 import { AppError } from "../../../common/errors/AppError.js";
-import {
-  Mt5AccountRepository,
-} from "../repositories/mt5Account.repository.js";
+import { Mt5AccountRepository } from "../repositories/mt5Account.repository.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
 import { Mt5Client } from "../../../integrations/mt5/mt5.client.js";
 

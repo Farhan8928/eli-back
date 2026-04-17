@@ -32,7 +32,9 @@ const toResetMt5PasswordDto = (payload) => ({
   reset: Boolean(payload?.reset),
 });
 
-export { toMt5AccountDto,
+export {
+  toMt5AccountDto,
   toMt5AccountListDto,
   toCreateMt5AccountDto,
-  toResetMt5PasswordDto, };
+  toResetMt5PasswordDto,
+};

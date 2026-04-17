@@ -1,8 +1,6 @@
 import { AppError } from "../../../common/errors/AppError.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
-import {
-  TransactionRepository,
-} from "../repositories/transaction.repository.js";
+import { TransactionRepository } from "../repositories/transaction.repository.js";
 
 class TransactionService {
   constructor() {

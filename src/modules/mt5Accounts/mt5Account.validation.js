@@ -1,7 +1,5 @@
 import { z } from "zod";
-import {
-  emptyObjectPassthroughSchema,
-} from "../../utils/validationPrimitives.js";
+import { emptyObjectPassthroughSchema } from "../../utils/validationPrimitives.js";
 
 const mt5CreateMineSchema = z.object({
   body: z.object({
@@ -23,5 +21,4 @@ const mt5ResetPasswordSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-export { mt5CreateMineSchema,
-  mt5ResetPasswordSchema, };
+export { mt5CreateMineSchema, mt5ResetPasswordSchema };
