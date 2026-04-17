@@ -1,10 +1,18 @@
-const Joi = require("joi");
-
-const createTransactionDto = Joi.object({
-  userId: Joi.string().required(),
-  type: Joi.string().valid("deposit", "withdraw").required(),
-  amount: Joi.number().min(0.01).required(),
-  note: Joi.string().max(250).allow("")
+const toTransactionDto = (tx) => ({
+	id: String(tx?._id || tx?.id || ""),
+	userId: String(tx?.userId || ""),
+	type: String(tx?.type || ""),
+	amount: Number(tx?.amount || 0),
+	status: String(tx?.status || ""),
+	note: String(tx?.note || ""),
+	performedBy: String(tx?.performedBy || ""),
+	createdAt: tx?.createdAt || null,
+	updatedAt: tx?.updatedAt || null
 });
 
-module.exports = { createTransactionDto };
+const toTransactionListDto = (items) => (Array.isArray(items) ? items.map(toTransactionDto) : []);
+
+module.exports = {
+	toTransactionDto,
+	toTransactionListDto
+};

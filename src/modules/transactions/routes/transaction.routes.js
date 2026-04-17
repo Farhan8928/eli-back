@@ -1,5 +1,5 @@
 const express = require("express");
-const { TransactionController } = require("../controllers/transaction.controller");
+const { transactionController } = require("../controllers/transaction.controller");
 const { authGuard } = require("../../../common/middleware/auth.middleware");
 const { roleGuard } = require("../../../common/middleware/role.middleware");
 const { validateRequest } = require("../../../middlewares/validateRequest");
@@ -7,7 +7,6 @@ const { transactionCreateManualSchema } = require("../transaction.validation");
 const { asyncHandler } = require("../../../common/utils/asyncHandler");
 
 const transactionRoutes = express.Router();
-const transactionController = new TransactionController();
 
 transactionRoutes.use(authGuard);
 

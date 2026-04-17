@@ -1,9 +1,18 @@
-const Joi = require("joi");
+const toAuthRegisterDto = (payload) => {
+	if (!payload) {
+		return null;
+	}
 
-const registerDto = Joi.object({
-  name: Joi.string().min(2).max(120).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().min(8).max(128).required()
-});
+	return {
+		token: String(payload.token || ""),
+		user: {
+			id: String(payload.user?.id || ""),
+			name: String(payload.user?.name || ""),
+			email: String(payload.user?.email || ""),
+			role: String(payload.user?.role || ""),
+			kycStatus: String(payload.user?.kycStatus || "")
+		}
+	};
+};
 
-module.exports = { registerDto };
+module.exports = { toAuthRegisterDto };

@@ -1,6 +1,6 @@
 const { AppError } = require("../common/errors/AppError");
 
-const validateRequest = (schema) => (req, res, next) => {
+const validateRequest = (schema) => (req, _res, next) => {
   const result = schema.safeParse({
     body: req.body || {},
     params: req.params || {},
@@ -22,9 +22,6 @@ const validateRequest = (schema) => (req, res, next) => {
   }
 
   req.validated = result.data;
-  req.body = result.data.body;
-  req.params = result.data.params;
-  req.query = result.data.query;
 
   return next();
 };

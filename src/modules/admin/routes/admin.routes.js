@@ -1,5 +1,5 @@
 const express = require("express");
-const { AdminController } = require("../controllers/admin.controller");
+const { adminController } = require("../controllers/admin.controller");
 const { authGuard } = require("../../../common/middleware/auth.middleware");
 const { roleGuard } = require("../../../common/middleware/role.middleware");
 const { asyncHandler } = require("../../../common/utils/asyncHandler");
@@ -11,7 +11,6 @@ const {
 } = require("../admin.validation");
 
 const adminRoutes = express.Router();
-const adminController = new AdminController();
 
 adminRoutes.use(authGuard, roleGuard("superadmin"));
 

@@ -1,17 +1,31 @@
-const Joi = require("joi");
+const toClientDto = (user) => ({
+  id: String(user?._id || user?.id || ""),
+  name: String(user?.name || ""),
+  email: String(user?.email || ""),
+  role: String(user?.role || ""),
+  kycStatus: String(user?.kycStatus || ""),
+  createdAt: user?.createdAt || null,
+  updatedAt: user?.updatedAt || null
+});
 
-const updateUserDto = Joi.object({
-  name: Joi.string().min(2).max(120),
-  role: Joi.string().valid("client", "superadmin"),
-  kycStatus: Joi.string().valid("pending", "approved", "rejected")
-}).min(1);
+const toClientsListDto = (items) => (Array.isArray(items) ? items.map(toClientDto) : []);
 
-const userQueryDto = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20)
+const toDeleteUserDto = (payload) => ({
+  id: String(payload?.id || ""),
+  deleted: Boolean(payload?.deleted)
+});
+
+const toAdminAnalyticsDto = (payload) => ({
+  totalClients: Number(payload?.totalClients || 0),
+  approvedKyc: Number(payload?.approvedKyc || 0),
+  totalMt5Accounts: Number(payload?.totalMt5Accounts || 0),
+  totalDeposits: Number(payload?.totalDeposits || 0),
+  totalWithdrawals: Number(payload?.totalWithdrawals || 0)
 });
 
 module.exports = {
-  updateUserDto,
-  userQueryDto
+  toClientDto,
+  toClientsListDto,
+  toDeleteUserDto,
+  toAdminAnalyticsDto
 };

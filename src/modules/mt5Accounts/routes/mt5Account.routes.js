@@ -1,5 +1,5 @@
 const express = require("express");
-const { Mt5AccountController } = require("../controllers/mt5Account.controller");
+const { mt5AccountController } = require("../controllers/mt5Account.controller");
 const { asyncHandler } = require("../../../common/utils/asyncHandler");
 const { authGuard } = require("../../../common/middleware/auth.middleware");
 const { roleGuard } = require("../../../common/middleware/role.middleware");
@@ -7,7 +7,6 @@ const { validateRequest } = require("../../../middlewares/validateRequest");
 const { mt5CreateMineSchema, mt5ResetPasswordSchema } = require("../mt5Account.validation");
 
 const mt5AccountRoutes = express.Router();
-const mt5AccountController = new Mt5AccountController();
 
 mt5AccountRoutes.use(authGuard);
 

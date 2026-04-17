@@ -1,18 +1,35 @@
-const Joi = require("joi");
-
-const createMt5AccountDto = Joi.object({
-  type: Joi.string().valid("demo", "live").required(),
-  leverage: Joi.number().integer().min(1).max(5000).required(),
-  group: Joi.string().trim().min(2).max(64).required(),
-  initialDeposit: Joi.number().min(0).default(0)
+const toMt5AccountDto = (account) => ({
+  login: Number(account?.login || 0),
+  type: String(account?.type || ""),
+  server: String(account?.server || ""),
+  leverage: Number(account?.leverage || 0),
+  group: String(account?.group || ""),
+  createdAt: account?.createdAt || null,
+  balance: typeof account?.balance === "number" ? account.balance : undefined,
+  equity: typeof account?.equity === "number" ? account.equity : undefined,
+  margin: typeof account?.margin === "number" ? account.margin : undefined,
+  openTrades: Array.isArray(account?.openTrades) ? account.openTrades : undefined,
+  tradeHistory: Array.isArray(account?.tradeHistory) ? account.tradeHistory : undefined
 });
 
-const resetMt5PasswordDto = Joi.object({
-  login: Joi.number().required(),
-  newPassword: Joi.string().min(8).max(128).required()
+const toMt5AccountListDto = (items) => (Array.isArray(items) ? items.map(toMt5AccountDto) : []);
+
+const toCreateMt5AccountDto = (payload) => ({
+  account: toMt5AccountDto(payload?.account || {}),
+  credentialsDelivery: {
+    channel: String(payload?.credentialsDelivery?.channel || "secure-inbox"),
+    sentAt: payload?.credentialsDelivery?.sentAt || null
+  }
+});
+
+const toResetMt5PasswordDto = (payload) => ({
+  login: Number(payload?.login || 0),
+  reset: Boolean(payload?.reset)
 });
 
 module.exports = {
-  createMt5AccountDto,
-  resetMt5PasswordDto
+  toMt5AccountDto,
+  toMt5AccountListDto,
+  toCreateMt5AccountDto,
+  toResetMt5PasswordDto
 };
