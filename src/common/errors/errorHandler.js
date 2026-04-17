@@ -1,4 +1,5 @@
 const { AppError } = require("./AppError");
+const { logger } = require("../../config/logger");
 
 const errorHandler = (err, req, res, _next) => {
   let normalizedError = err;
@@ -12,7 +13,7 @@ const errorHandler = (err, req, res, _next) => {
   }
 
   if (process.env.NODE_ENV !== "production") {
-    console.error(err);
+    logger.error({ err }, "Unhandled error");
   }
 
   return res.status(normalizedError.statusCode).json({
