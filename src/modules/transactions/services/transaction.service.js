@@ -1,6 +1,8 @@
 const { AppError } = require("../../../common/errors/AppError");
 const { UserRepository } = require("../../users/repositories/user.repository");
-const { TransactionRepository } = require("../repositories/transaction.repository");
+const {
+  TransactionRepository,
+} = require("../repositories/transaction.repository");
 
 class TransactionService {
   constructor() {
@@ -20,7 +22,7 @@ class TransactionService {
       amount: payload.amount,
       status: "completed",
       note: payload.note || "",
-      performedBy: adminUser.id
+      performedBy: adminUser.id,
     });
   }
 

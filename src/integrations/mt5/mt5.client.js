@@ -4,7 +4,7 @@ const {
   mt5ServiceApiKey,
   mt5Login,
   mt5Password,
-  mt5Server
+  mt5Server,
 } = require("../../config/env");
 const { AppError } = require("../../common/errors/AppError");
 
@@ -15,15 +15,23 @@ class Mt5Client {
       timeout: 8000,
       headers: {
         "Content-Type": "application/json",
-        ...(mt5ServiceApiKey ? { "x-api-key": mt5ServiceApiKey } : {})
-      }
+        ...(mt5ServiceApiKey ? { "x-api-key": mt5ServiceApiKey } : {}),
+      },
     });
   }
 
   normalizeError(error) {
     const statusCode = error.response?.status || 502;
-    const message = error.response?.data?.error?.message || error.message || "MT5 service failed";
-    return new AppError(message, statusCode, "MT5_SERVICE_ERROR", error.response?.data || null);
+    const message =
+      error.response?.data?.error?.message ||
+      error.message ||
+      "MT5 service failed";
+    return new AppError(
+      message,
+      statusCode,
+      "MT5_SERVICE_ERROR",
+      error.response?.data || null,
+    );
   }
 
   async createAccount(payload) {
@@ -32,7 +40,7 @@ class Mt5Client {
         managerLogin: mt5Login,
         managerPassword: mt5Password,
         managerServer: mt5Server,
-        ...payload
+        ...payload,
       });
       return data;
     } catch (error) {
@@ -46,7 +54,7 @@ class Mt5Client {
         managerLogin: mt5Login,
         managerPassword: mt5Password,
         managerServer: mt5Server,
-        ...payload
+        ...payload,
       });
       return data;
     } catch (error) {
@@ -60,8 +68,8 @@ class Mt5Client {
         params: {
           managerLogin: mt5Login,
           managerPassword: mt5Password,
-          managerServer: mt5Server
-        }
+          managerServer: mt5Server,
+        },
       });
       return data;
     } catch (error) {

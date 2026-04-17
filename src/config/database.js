@@ -6,12 +6,12 @@ const connectDatabase = async (mongoUri) => {
   const connection = await mongoose.connect(mongoUri, {
     maxPoolSize: 50,
     minPoolSize: 5,
-    serverSelectionTimeoutMS: 5000
+    serverSelectionTimeoutMS: 5000,
   });
 
   logger.info(
     { host: connection.connection.host, database: connection.connection.name },
-    "MongoDB connected"
+    "MongoDB connected",
   );
 
   mongoose.connection.on("disconnected", () => {

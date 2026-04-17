@@ -21,5 +21,5 @@ module.exports = {
   mt5ServiceApiKey: process.env.MT5_SERVICE_API_KEY || "",
   mt5Login: process.env.MT5_LOGIN || "",
   mt5Password: process.env.MT5_PASSWORD || "",
-  mt5Server: process.env.MT5_SERVER || ""
+  mt5Server: process.env.MT5_SERVER || "",
 };

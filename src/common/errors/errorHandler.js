@@ -1,18 +1,17 @@
 const { AppError } = require("./AppError");
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   let normalizedError = err;
 
   if (!(err instanceof AppError)) {
     normalizedError = new AppError(
       err.message || "Unexpected error",
       err.statusCode || 500,
-      err.code || "INTERNAL_SERVER_ERROR"
+      err.code || "INTERNAL_SERVER_ERROR",
     );
   }
 
   if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
     console.error(err);
   }
 
@@ -21,8 +20,8 @@ const errorHandler = (err, req, res, next) => {
     error: {
       code: normalizedError.code,
       message: normalizedError.message,
-      details: normalizedError.details
-    }
+      details: normalizedError.details,
+    },
   });
 };
 

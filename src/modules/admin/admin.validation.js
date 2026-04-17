@@ -3,7 +3,7 @@ const {
   objectIdSchema,
   pageSchema,
   limitSchema,
-  emptyObjectPassthroughSchema
+  emptyObjectPassthroughSchema,
 } = require("../../utils/validationPrimitives");
 
 const adminListClientsSchema = z.object({
@@ -11,8 +11,8 @@ const adminListClientsSchema = z.object({
   params: emptyObjectPassthroughSchema,
   query: z.object({
     page: pageSchema,
-    limit: limitSchema
-  })
+    limit: limitSchema,
+  }),
 });
 
 const adminUpdateUserSchema = z.object({
@@ -20,27 +20,27 @@ const adminUpdateUserSchema = z.object({
     .object({
       name: z.string().trim().min(2).max(120).optional(),
       role: z.enum(["client", "superadmin"]).optional(),
-      kycStatus: z.enum(["pending", "approved", "rejected"]).optional()
+      kycStatus: z.enum(["pending", "approved", "rejected"]).optional(),
     })
     .refine((v) => Object.keys(v).length > 0, {
-      message: "At least one field is required"
+      message: "At least one field is required",
     }),
   params: z.object({
-    userId: objectIdSchema
+    userId: objectIdSchema,
   }),
-  query: emptyObjectPassthroughSchema
+  query: emptyObjectPassthroughSchema,
 });
 
 const adminDeleteUserSchema = z.object({
   body: emptyObjectPassthroughSchema,
   params: z.object({
-    userId: objectIdSchema
+    userId: objectIdSchema,
   }),
-  query: emptyObjectPassthroughSchema
+  query: emptyObjectPassthroughSchema,
 });
 
 module.exports = {
   adminListClientsSchema,
   adminUpdateUserSchema,
-  adminDeleteUserSchema
+  adminDeleteUserSchema,
 };

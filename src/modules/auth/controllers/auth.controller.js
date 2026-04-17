@@ -11,8 +11,8 @@ const authController = {
     return res.status(201).json(
       apiResponse({
         message: "User registered successfully",
-        data: toAuthRegisterDto(result)
-      })
+        data: toAuthRegisterDto(result),
+      }),
     );
   },
 
@@ -21,10 +21,10 @@ const authController = {
     return res.status(200).json(
       apiResponse({
         message: "Login successful",
-        data: toAuthLoginDto(result)
-      })
+        data: toAuthLoginDto(result),
+      }),
     );
-  }
+  },
 };
 
 module.exports = { authController };

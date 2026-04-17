@@ -6,38 +6,38 @@ const transactionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true
+      index: true,
     },
     type: {
       type: String,
       enum: ["deposit", "withdraw"],
       required: true,
-      index: true
+      index: true,
     },
     amount: {
       type: Number,
       required: true,
-      min: 0.01
+      min: 0.01,
     },
     status: {
       type: String,
       enum: ["pending", "completed", "rejected"],
-      default: "completed"
+      default: "completed",
     },
     note: {
       type: String,
-      default: ""
+      default: "",
     },
     performedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
-    }
+      required: true,
+    },
   },
   {
     timestamps: true,
-    versionKey: false
-  }
+    versionKey: false,
+  },
 );
 
 const Transaction = mongoose.model("Transaction", transactionSchema);

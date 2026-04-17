@@ -11,14 +11,14 @@ const logger = pino({
   formatters: {
     level(label) {
       return { level: label };
-    }
+    },
   },
   mixin() {
     const store = requestContext.getStore();
     const reqId = store?.get("reqId");
     return reqId ? { reqId } : {};
   },
-  timestamp: pino.stdTimeFunctions.isoTime
+  timestamp: pino.stdTimeFunctions.isoTime,
 });
 
 module.exports = { logger };

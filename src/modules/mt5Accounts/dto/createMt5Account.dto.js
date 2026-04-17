@@ -8,28 +8,33 @@ const toMt5AccountDto = (account) => ({
   balance: typeof account?.balance === "number" ? account.balance : undefined,
   equity: typeof account?.equity === "number" ? account.equity : undefined,
   margin: typeof account?.margin === "number" ? account.margin : undefined,
-  openTrades: Array.isArray(account?.openTrades) ? account.openTrades : undefined,
-  tradeHistory: Array.isArray(account?.tradeHistory) ? account.tradeHistory : undefined
+  openTrades: Array.isArray(account?.openTrades)
+    ? account.openTrades
+    : undefined,
+  tradeHistory: Array.isArray(account?.tradeHistory)
+    ? account.tradeHistory
+    : undefined,
 });
 
-const toMt5AccountListDto = (items) => (Array.isArray(items) ? items.map(toMt5AccountDto) : []);
+const toMt5AccountListDto = (items) =>
+  Array.isArray(items) ? items.map(toMt5AccountDto) : [];
 
 const toCreateMt5AccountDto = (payload) => ({
   account: toMt5AccountDto(payload?.account || {}),
   credentialsDelivery: {
     channel: String(payload?.credentialsDelivery?.channel || "secure-inbox"),
-    sentAt: payload?.credentialsDelivery?.sentAt || null
-  }
+    sentAt: payload?.credentialsDelivery?.sentAt || null,
+  },
 });
 
 const toResetMt5PasswordDto = (payload) => ({
   login: Number(payload?.login || 0),
-  reset: Boolean(payload?.reset)
+  reset: Boolean(payload?.reset),
 });
 
 module.exports = {
   toMt5AccountDto,
   toMt5AccountListDto,
   toCreateMt5AccountDto,
-  toResetMt5PasswordDto
+  toResetMt5PasswordDto,
 };

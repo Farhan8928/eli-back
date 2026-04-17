@@ -5,19 +5,19 @@ const mt5AccountRefSchema = new mongoose.Schema(
     accountId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Mt5Account",
-      required: true
+      required: true,
     },
     login: {
       type: Number,
-      required: true
+      required: true,
     },
     type: {
       type: String,
       enum: ["demo", "live"],
-      required: true
-    }
+      required: true,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const userSchema = new mongoose.Schema(
@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
       minlength: 2,
-      maxlength: 120
+      maxlength: 120,
     },
     email: {
       type: String,
@@ -35,33 +35,33 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true
+      index: true,
     },
     password: {
       type: String,
-      required: true
+      required: true,
     },
     role: {
       type: String,
       enum: ["client", "superadmin"],
       default: "client",
-      index: true
+      index: true,
     },
     kycStatus: {
       type: String,
       enum: ["pending", "approved", "rejected"],
       default: "pending",
-      index: true
+      index: true,
     },
     mt5Accounts: {
       type: [mt5AccountRefSchema],
-      default: []
-    }
+      default: [],
+    },
   },
   {
     timestamps: true,
-    versionKey: false
-  }
+    versionKey: false,
+  },
 );
 
 const User = mongoose.model("User", userSchema);

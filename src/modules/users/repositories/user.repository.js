@@ -21,14 +21,16 @@ class UserRepository {
         .skip(skip)
         .limit(limit)
         .select("-password"),
-      User.countDocuments({ role: "client" })
+      User.countDocuments({ role: "client" }),
     ]);
 
     return { items, total };
   }
 
   async updateById(userId, payload) {
-    return User.findByIdAndUpdate(userId, payload, { new: true }).select("-password");
+    return User.findByIdAndUpdate(userId, payload, { new: true }).select(
+      "-password",
+    );
   }
 
   async deleteById(userId) {
@@ -39,7 +41,7 @@ class UserRepository {
     return User.findByIdAndUpdate(
       userId,
       { $push: { mt5Accounts: mt5Ref } },
-      { new: true }
+      { new: true },
     ).select("-password");
   }
 }

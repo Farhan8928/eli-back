@@ -14,10 +14,10 @@ class AuthService {
       {
         sub: user._id,
         role: user.role,
-        email: user.email
+        email: user.email,
       },
       jwtSecret,
-      { expiresIn: jwtExpiresIn }
+      { expiresIn: jwtExpiresIn },
     );
   }
 
@@ -33,7 +33,7 @@ class AuthService {
       email: payload.email,
       password: hash,
       role: "client",
-      kycStatus: "pending"
+      kycStatus: "pending",
     });
 
     const token = this.signToken(user);
@@ -45,8 +45,8 @@ class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
-        kycStatus: user.kycStatus
-      }
+        kycStatus: user.kycStatus,
+      },
     };
   }
 
@@ -70,8 +70,8 @@ class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
-        kycStatus: user.kycStatus
-      }
+        kycStatus: user.kycStatus,
+      },
     };
   }
 }

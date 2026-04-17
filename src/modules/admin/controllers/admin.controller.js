@@ -4,7 +4,7 @@ const {
   toClientDto,
   toClientsListDto,
   toDeleteUserDto,
-  toAdminAnalyticsDto
+  toAdminAnalyticsDto,
 } = require("../dto/manageUser.dto");
 
 const adminService = new AdminService();
@@ -19,22 +19,22 @@ const adminController = {
         meta: {
           total: result.total,
           page: Number(req.validated.query.page),
-          limit: Number(req.validated.query.limit)
-        }
-      })
+          limit: Number(req.validated.query.limit),
+        },
+      }),
     );
   },
 
   updateUser: async (req, res) => {
     const result = await adminService.updateUser(
       req.validated.params.userId,
-      req.validated.body
+      req.validated.body,
     );
     return res.status(200).json(
       apiResponse({
         message: "User updated successfully",
-        data: toClientDto(result)
-      })
+        data: toClientDto(result),
+      }),
     );
   },
 
@@ -43,8 +43,8 @@ const adminController = {
     return res.status(200).json(
       apiResponse({
         message: "User deleted successfully",
-        data: toDeleteUserDto(result)
-      })
+        data: toDeleteUserDto(result),
+      }),
     );
   },
 
@@ -53,10 +53,10 @@ const adminController = {
     return res.status(200).json(
       apiResponse({
         message: "System analytics fetched successfully",
-        data: toAdminAnalyticsDto(result)
-      })
+        data: toAdminAnalyticsDto(result),
+      }),
     );
-  }
+  },
 };
 
 module.exports = { adminController };

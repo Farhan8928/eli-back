@@ -35,19 +35,19 @@ class AdminService {
       approvedKyc,
       totalMt5Accounts,
       totalDeposits,
-      totalWithdrawals
+      totalWithdrawals,
     ] = await Promise.all([
       User.countDocuments({ role: "client" }),
       User.countDocuments({ role: "client", kycStatus: "approved" }),
       Mt5Account.countDocuments(),
       Transaction.aggregate([
         { $match: { type: "deposit", status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$amount" } } }
+        { $group: { _id: null, total: { $sum: "$amount" } } },
       ]),
       Transaction.aggregate([
         { $match: { type: "withdraw", status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$amount" } } }
-      ])
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
     ]);
 
     return {
@@ -55,7 +55,7 @@ class AdminService {
       approvedKyc,
       totalMt5Accounts,
       totalDeposits: totalDeposits[0]?.total || 0,
-      totalWithdrawals: totalWithdrawals[0]?.total || 0
+      totalWithdrawals: totalWithdrawals[0]?.total || 0,
     };
   }
 }

@@ -25,5 +25,5 @@ module.exports = {
   pageSchema,
   limitSchema,
   emptyObjectPassthroughSchema,
-  emailSchema
+  emailSchema,
 };

@@ -6,47 +6,47 @@ const mt5AccountSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true
+      index: true,
     },
     login: {
       type: Number,
       required: true,
-      index: true
+      index: true,
     },
     type: {
       type: String,
       enum: ["demo", "live"],
-      required: true
+      required: true,
     },
     server: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     leverage: {
       type: Number,
-      required: true
+      required: true,
     },
     group: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     credentials: {
       investorPassword: {
         type: String,
-        default: null
+        default: null,
       },
       sentAt: {
         type: Date,
-        default: null
-      }
-    }
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,
-    versionKey: false
-  }
+    versionKey: false,
+  },
 );
 
 const Mt5Account = mongoose.model("Mt5Account", mt5AccountSchema);

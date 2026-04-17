@@ -23,5 +23,5 @@ const requestContextProvider = (req, res, next) => {
 
 module.exports = {
   requestContext,
-  requestContextProvider
+  requestContextProvider,
 };

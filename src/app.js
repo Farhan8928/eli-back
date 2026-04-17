@@ -9,7 +9,9 @@ const { logger } = require("./config/logger");
 const { router: apiRouter } = require("./routes");
 const { notFound } = require("./common/middleware/notFound.middleware");
 const { errorHandler } = require("./common/errors/errorHandler");
-const { requestContextProvider } = require("./middlewares/requestContextProvider");
+const {
+  requestContextProvider,
+} = require("./middlewares/requestContextProvider");
 
 const app = express();
 
@@ -19,8 +21,8 @@ app.use(helmet());
 app.use(
   cors({
     origin: clientOrigin,
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
@@ -33,8 +35,8 @@ app.use(
     windowMs: 60 * 1000,
     max: 200,
     standardHeaders: true,
-    legacyHeaders: false
-  })
+    legacyHeaders: false,
+  }),
 );
 
 app.get("/health", (req, res) => {

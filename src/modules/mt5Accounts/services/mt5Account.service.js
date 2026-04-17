@@ -1,5 +1,7 @@
 const { AppError } = require("../../../common/errors/AppError");
-const { Mt5AccountRepository } = require("../repositories/mt5Account.repository");
+const {
+  Mt5AccountRepository,
+} = require("../repositories/mt5Account.repository");
 const { UserRepository } = require("../../users/repositories/user.repository");
 const { Mt5Client } = require("../../../integrations/mt5/mt5.client");
 
@@ -17,14 +19,18 @@ class Mt5AccountService {
     }
 
     if (user.kycStatus !== "approved") {
-      throw new AppError("KYC must be approved before creating live account", 403, "KYC_NOT_APPROVED");
+      throw new AppError(
+        "KYC must be approved before creating live account",
+        403,
+        "KYC_NOT_APPROVED",
+      );
     }
 
     const mt5Result = await this.mt5Client.createAccount({
       userId: String(user._id),
       name: user.name,
       email: user.email,
-      ...payload
+      ...payload,
     });
 
     const account = await this.mt5AccountRepository.create({
@@ -36,27 +42,29 @@ class Mt5AccountService {
       group: payload.group,
       credentials: {
         investorPassword: mt5Result.data.investorPassword || null,
-        sentAt: new Date()
-      }
+        sentAt: new Date(),
+      },
     });
 
     await this.userRepository.appendMt5Account(user._id, {
       accountId: account._id,
       login: account.login,
-      type: account.type
+      type: account.type,
     });
 
     return {
       account,
       credentialsDelivery: {
         channel: "secure-inbox",
-        sentAt: account.credentials.sentAt
-      }
+        sentAt: account.credentials.sentAt,
+      },
     };
   }
 
   async getMine(userContext) {
-    const accounts = await this.mt5AccountRepository.findByUserId(userContext.id);
+    const accounts = await this.mt5AccountRepository.findByUserId(
+      userContext.id,
+    );
 
     const enriched = await Promise.all(
       accounts.map(async (account) => {
@@ -72,9 +80,9 @@ class Mt5AccountService {
           equity: remote.data.equity,
           margin: remote.data.margin,
           openTrades: remote.data.openTrades,
-          tradeHistory: remote.data.tradeHistory
+          tradeHistory: remote.data.tradeHistory,
         };
-      })
+      }),
     );
 
     return enriched;
