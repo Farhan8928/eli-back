@@ -26,12 +26,12 @@ class AuthService {
 
   async register(payload) {
     const existing = await this.userRepository.findByEmail(payload.email);
-    
+
     if (existing) {
       if (existing.isEmailVerified) {
         throw new AppError("Email already in use", 409, "EMAIL_CONFLICT");
       }
-      
+
       // If user exists but not verified, update and resend OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       existing.otp = otp;
@@ -69,7 +69,7 @@ class AuthService {
     await AuditLog.create({
       userType: "system",
       log: `New user registered: ${user.email}`,
-      metadata: { userId: user._id }
+      metadata: { userId: user._id },
     });
 
     // Send OTP Email
@@ -104,7 +104,7 @@ class AuthService {
     await AuditLog.create({
       userType: "system",
       log: `User email verified: ${user.email}`,
-      metadata: { userId: user._id }
+      metadata: { userId: user._id },
     });
 
     const token = this.signToken(user);
@@ -128,7 +128,11 @@ class AuthService {
     }
 
     if (!user.isEmailVerified && user.role !== "superadmin") {
-      throw new AppError("Please verify your email first", 403, "EMAIL_NOT_VERIFIED");
+      throw new AppError(
+        "Please verify your email first",
+        403,
+        "EMAIL_NOT_VERIFIED",
+      );
     }
 
     const matched = await bcrypt.compare(payload.password, user.password);
@@ -141,7 +145,7 @@ class AuthService {
     await AuditLog.create({
       userType: user.role,
       log: `${user.role} logged in: ${user.email}`,
-      metadata: { userId: user._id }
+      metadata: { userId: user._id },
     });
 
     return {
@@ -158,15 +162,16 @@ class AuthService {
 
   async forgotPassword(payload) {
     const user = await this.userRepository.findByEmail(payload.email);
-    const successMsg = "If an account exists with this email, a reset password has been sent.";
-    
+    const successMsg =
+      "If an account exists with this email, a reset password has been sent.";
+
     if (!user) {
       return { message: successMsg };
     }
 
     const tempPassword = Math.random().toString(36).slice(-8);
     const hash = await bcrypt.hash(tempPassword, 12);
-    
+
     user.password = hash;
     await user.save();
 
@@ -189,7 +194,7 @@ class AuthService {
     await AuditLog.create({
       userType: "admin",
       log: `Admin impersonated user: ${user.email}`,
-      metadata: { userId: user._id }
+      metadata: { userId: user._id },
     });
 
     return {

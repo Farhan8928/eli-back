@@ -15,15 +15,17 @@ class UserRepository {
 
   async findAllClients({ page, limit, search, kycStatus }) {
     const skip = (page - 1) * limit;
-    const filter = { 
+    const filter = {
       role: "client",
       ...(kycStatus && kycStatus !== "all" ? { kycStatus } : {}),
-      ...(search ? {
-        $or: [
-          { name: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } }
-        ]
-      } : {})
+      ...(search
+        ? {
+            $or: [
+              { name: { $regex: search, $options: "i" } },
+              { email: { $regex: search, $options: "i" } },
+            ],
+          }
+        : {}),
     };
 
     const [items, total] = await Promise.all([

@@ -40,4 +40,9 @@ const authForgotPasswordSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-export { authRegisterSchema, authLoginSchema, authVerifyOtpSchema, authForgotPasswordSchema };
+export {
+  authRegisterSchema,
+  authLoginSchema,
+  authVerifyOtpSchema,
+  authForgotPasswordSchema,
+};

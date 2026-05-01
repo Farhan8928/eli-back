@@ -54,11 +54,13 @@ const toMt5AccountDto = (acc) => ({
   type: String(acc?.type || "demo"),
   balance: Number(acc?.balance || 0),
   equity: Number(acc?.equity || 0),
-  userId: acc?.userId ? {
-    id: String(acc.userId._id || acc.userId.id || ""),
-    name: String(acc.userId.name || ""),
-    email: String(acc.userId.email || ""),
-  } : null,
+  userId: acc?.userId
+    ? {
+        id: String(acc.userId._id || acc.userId.id || ""),
+        name: String(acc.userId.name || ""),
+        email: String(acc.userId.email || ""),
+      }
+    : null,
   createdAt: acc?.createdAt || null,
 });
 
@@ -70,11 +72,13 @@ const toTransactionDto = (tx) => ({
   type: String(tx?.type || "deposit"),
   amount: Number(tx?.amount || 0),
   status: String(tx?.status || "pending"),
-  userId: tx?.userId ? {
-    id: String(tx.userId._id || tx.userId.id || ""),
-    name: String(tx.userId.name || ""),
-    email: String(tx.userId.email || ""),
-  } : null,
+  userId: tx?.userId
+    ? {
+        id: String(tx.userId._id || tx.userId.id || ""),
+        name: String(tx.userId.name || ""),
+        email: String(tx.userId.email || ""),
+      }
+    : null,
   createdAt: tx?.createdAt || null,
 });
 
@@ -94,19 +98,19 @@ const toAdminAnalyticsDto = (payload) => ({
   totalWithdrawals: Number(payload?.totalWithdrawals || 0),
 });
 
-export { 
-  toClientDto, 
-  toClientsListDto, 
-  toPlanDto, 
-  toPlansListDto, 
-  toEmailerDto, 
-  toEmailersListDto, 
-  toRepresentativeDto, 
-  toRepresentativesListDto, 
+export {
+  toClientDto,
+  toClientsListDto,
+  toPlanDto,
+  toPlansListDto,
+  toEmailerDto,
+  toEmailersListDto,
+  toRepresentativeDto,
+  toRepresentativesListDto,
   toMt5AccountDto,
   toMt5AccountsListDto,
   toTransactionDto,
   toTransactionsListDto,
-  toDeleteUserDto, 
-  toAdminAnalyticsDto 
+  toDeleteUserDto,
+  toAdminAnalyticsDto,
 };

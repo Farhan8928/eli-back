@@ -32,7 +32,9 @@ class MailService {
     try {
       const template = await EmailerConfig.findOne({ emailerType });
       if (!template) {
-        logger.warn(`Email template for type ${emailerType} not found. Skipping email.`);
+        logger.warn(
+          `Email template for type ${emailerType} not found. Skipping email.`,
+        );
         return;
       }
 
@@ -58,7 +60,9 @@ class MailService {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      logger.info(`Email sent: ${emailerType} to ${toEmail}. MessageId: ${info.messageId}`);
+      logger.info(
+        `Email sent: ${emailerType} to ${toEmail}. MessageId: ${info.messageId}`,
+      );
       return info;
     } catch (error) {
       logger.error(`Failed to send email ${emailerType} to ${toEmail}:`, error);

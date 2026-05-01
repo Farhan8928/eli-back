@@ -51,7 +51,7 @@ class Mt5AccountService {
     await AuditLog.create({
       userType: "client",
       log: `Client created new MT5 account: ${account.login}`,
-      metadata: { userId: user._id, login: account.login, type: account.type }
+      metadata: { userId: user._id, login: account.login, type: account.type },
     });
 
     return {
@@ -103,7 +103,11 @@ class Mt5AccountService {
   async resetPasswordByClient(userContext, login, newPassword) {
     const account = await this.mt5AccountRepository.findByLogin(login);
     if (!account || String(account.userId) !== String(userContext.id)) {
-      throw new AppError("MT5 account not found or access denied", 404, "MT5_ACCOUNT_NOT_FOUND");
+      throw new AppError(
+        "MT5 account not found or access denied",
+        404,
+        "MT5_ACCOUNT_NOT_FOUND",
+      );
     }
 
     await this.mt5Client.resetPassword({ login, newPassword });
@@ -111,7 +115,7 @@ class Mt5AccountService {
     await AuditLog.create({
       userType: "client",
       log: `Client reset password for MT5 account: ${login}`,
-      metadata: { userId: userContext.id, login }
+      metadata: { userId: userContext.id, login },
     });
 
     return { login, reset: true };

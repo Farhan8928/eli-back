@@ -22,9 +22,20 @@ const adminRoutes = express.Router();
 adminRoutes.use(authGuard);
 
 // Stats (Shared but logic is internal to controller)
-adminRoutes.get("/stats/client", asyncHandler(adminController.getClientDashboardStats));
-adminRoutes.get("/stats/admin", roleGuard("superadmin"), asyncHandler(adminController.getDashboardStats));
-adminRoutes.post("/users/:userId/impersonate", roleGuard("superadmin"), asyncHandler(adminController.impersonateUser));
+adminRoutes.get(
+  "/stats/client",
+  asyncHandler(adminController.getClientDashboardStats),
+);
+adminRoutes.get(
+  "/stats/admin",
+  roleGuard("superadmin"),
+  asyncHandler(adminController.getDashboardStats),
+);
+adminRoutes.post(
+  "/users/:userId/impersonate",
+  roleGuard("superadmin"),
+  asyncHandler(adminController.impersonateUser),
+);
 
 adminRoutes.use(roleGuard("superadmin"));
 
@@ -54,7 +65,10 @@ adminRoutes.delete(
   asyncHandler(adminController.deleteUser),
 );
 adminRoutes.get("/analytics", asyncHandler(adminController.analytics));
-adminRoutes.get("/analytics/charts", asyncHandler(adminController.dashboardCharts));
+adminRoutes.get(
+  "/analytics/charts",
+  asyncHandler(adminController.dashboardCharts),
+);
 adminRoutes.get("/logs", asyncHandler(adminController.listAuditLogs));
 
 // Plans
@@ -73,10 +87,7 @@ adminRoutes.patch(
   validateRequest(adminCreatePlanSchema),
   asyncHandler(adminController.updatePlan),
 );
-adminRoutes.delete(
-  "/plans/:planId",
-  asyncHandler(adminController.deletePlan),
-);
+adminRoutes.delete("/plans/:planId", asyncHandler(adminController.deletePlan));
 
 // SMTP
 adminRoutes.put(

@@ -27,17 +27,21 @@ class AdminService {
 
     // Email trigger for KYC update
     if (payload.kycStatus) {
-      mailService.sendTemplatedEmail(`KYC_${payload.kycStatus.toUpperCase()}`, updated.email, {
-        NAME: updated.name,
-        STATUS: payload.kycStatus,
-      });
+      mailService.sendTemplatedEmail(
+        `KYC_${payload.kycStatus.toUpperCase()}`,
+        updated.email,
+        {
+          NAME: updated.name,
+          STATUS: payload.kycStatus,
+        },
+      );
     }
 
     // Audit Log
     this.createAuditLog({
       userType: "admin",
       log: `Admin updated user profile for ${updated.email}`,
-      metadata: payload
+      metadata: payload,
     });
 
     return updated;
@@ -45,7 +49,9 @@ class AdminService {
 
   async changeUserPassword(userId, newPassword) {
     const hash = await bcrypt.hash(newPassword, 12);
-    const updated = await this.userRepository.updateById(userId, { password: hash });
+    const updated = await this.userRepository.updateById(userId, {
+      password: hash,
+    });
     if (!updated) {
       throw new AppError("User not found", 404, "USER_NOT_FOUND");
     }
@@ -53,7 +59,7 @@ class AdminService {
     this.createAuditLog({
       userType: "admin",
       log: `Admin changed password for user ${updated.email}`,
-      metadata: { userId }
+      metadata: { userId },
     });
 
     return { success: true };
@@ -68,7 +74,7 @@ class AdminService {
     this.createAuditLog({
       userType: "admin",
       log: `Admin deleted user account ${deleted.email}`,
-      metadata: { userId }
+      metadata: { userId },
     });
 
     return { id: userId, deleted: true };
@@ -108,37 +114,37 @@ class AdminService {
     // Registrations over time (last 6 months)
     const registrations = await User.aggregate([
       {
-        $match: { role: "client" }
+        $match: { role: "client" },
       },
       {
         $group: {
           _id: {
             month: { $month: "$createdAt" },
-            year: { $year: "$createdAt" }
+            year: { $year: "$createdAt" },
           },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } },
-      { $limit: 6 }
+      { $limit: 6 },
     ]);
 
     // Format for charts: { label: 'MM-YYYY', value: N }
-    const chartData = registrations.map(item => ({
+    const chartData = registrations.map((item) => ({
       label: `${item._id.month}-${item._id.year}`,
-      value: item.count
+      value: item.count,
     }));
 
     // For Last 15 Commissions, we simulate some data for now as commission logic is complex
     const commissions = Array.from({ length: 15 }, (_, i) => ({
       period: `Day ${i + 1}`,
       traders: Math.floor(Math.random() * 10) + 1,
-      commission: Math.floor(Math.random() * 500) + 100
+      commission: Math.floor(Math.random() * 500) + 100,
     }));
 
     return {
       registrations: chartData,
-      commissions
+      commissions,
     };
   }
 
@@ -148,16 +154,18 @@ class AdminService {
     const search = query.search || "";
     const skip = (page - 1) * limit;
 
-    const filter = search ? {
-      $or: [
-        { log: { $regex: search, $options: "i" } },
-        { userType: { $regex: search, $options: "i" } }
-      ]
-    } : {};
+    const filter = search
+      ? {
+          $or: [
+            { log: { $regex: search, $options: "i" } },
+            { userType: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
 
     const [items, total] = await Promise.all([
       AuditLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      AuditLog.countDocuments(filter)
+      AuditLog.countDocuments(filter),
     ]);
 
     return { items, total };
@@ -173,13 +181,15 @@ class AdminService {
     this.createAuditLog({
       userType: "admin",
       log: `Admin created new plan: ${plan.planName}`,
-      metadata: payload
+      metadata: payload,
     });
     return plan;
   }
 
   async updatePlan(planId, payload) {
-    const updated = await Plan.findByIdAndUpdate(planId, payload, { new: true });
+    const updated = await Plan.findByIdAndUpdate(planId, payload, {
+      new: true,
+    });
     if (!updated) throw new AppError("Plan not found", 404, "PLAN_NOT_FOUND");
     return updated;
   }
@@ -196,12 +206,14 @@ class AdminService {
     const search = query.search || "";
     const skip = (page - 1) * limit;
 
-    const filter = search ? {
-      $or: [
-        { planName: { $regex: search, $options: "i" } },
-        { groupName: { $regex: search, $options: "i" } }
-      ]
-    } : {};
+    const filter = search
+      ? {
+          $or: [
+            { planName: { $regex: search, $options: "i" } },
+            { groupName: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
 
     let [items, total] = await Promise.all([
       Plan.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -212,29 +224,32 @@ class AdminService {
     if (total === 0 && !search && page === 1) {
       const defaultPlans = [
         {
-          planName: 'Elite Standard',
-          groupName: 'Real\\EliteFX_Standard',
-          leverage: '1:100',
+          planName: "Elite Standard",
+          groupName: "Real\\EliteFX_Standard",
+          leverage: "1:100",
           minDeposit: 100,
-          active: true
+          active: true,
         },
         {
-          planName: 'Elite ECN',
-          groupName: 'Real\\EliteFX_ECN',
-          leverage: '1:100',
+          planName: "Elite ECN",
+          groupName: "Real\\EliteFX_ECN",
+          leverage: "1:100",
           minDeposit: 500,
-          active: true
+          active: true,
         },
         {
-          planName: 'Elite Pro',
-          groupName: 'Real\\EliteFX_Pro',
-          leverage: '1:100',
+          planName: "Elite Pro",
+          groupName: "Real\\EliteFX_Pro",
+          leverage: "1:100",
           minDeposit: 1000,
-          active: true
-        }
+          active: true,
+        },
       ];
       await Plan.insertMany(defaultPlans);
-      items = await Plan.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
+      items = await Plan.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
       total = defaultPlans.length;
     }
 
@@ -263,14 +278,18 @@ class AdminService {
   }
 
   async updateEmailer(emailerId, payload) {
-    const updated = await EmailerConfig.findByIdAndUpdate(emailerId, payload, { new: true });
-    if (!updated) throw new AppError("Emailer not found", 404, "EMAILER_NOT_FOUND");
+    const updated = await EmailerConfig.findByIdAndUpdate(emailerId, payload, {
+      new: true,
+    });
+    if (!updated)
+      throw new AppError("Emailer not found", 404, "EMAILER_NOT_FOUND");
     return updated;
   }
 
   async deleteEmailer(emailerId) {
     const deleted = await EmailerConfig.findByIdAndDelete(emailerId);
-    if (!deleted) throw new AppError("Emailer not found", 404, "EMAILER_NOT_FOUND");
+    if (!deleted)
+      throw new AppError("Emailer not found", 404, "EMAILER_NOT_FOUND");
     return { id: emailerId, deleted: true };
   }
 
@@ -307,7 +326,7 @@ class AdminService {
     this.createAuditLog({
       userType: "admin",
       log: `Admin created new representative: ${user.email}`,
-      metadata: { name: user.name, email: user.email }
+      metadata: { name: user.name, email: user.email },
     });
 
     return user;
@@ -337,7 +356,11 @@ class AdminService {
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-      Mt5Account.find().populate("userId", "name email").sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Mt5Account.find()
+        .populate("userId", "name email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       Mt5Account.countDocuments(),
     ]);
 
@@ -351,7 +374,11 @@ class AdminService {
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-      Transaction.find().populate("userId", "name email").sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Transaction.find()
+        .populate("userId", "name email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       Transaction.countDocuments(),
     ]);
 
@@ -365,7 +392,11 @@ class AdminService {
     }
 
     if (tx.status !== "pending") {
-      throw new AppError("Transaction already processed", 400, "TRANSACTION_ALREADY_PROCESSED");
+      throw new AppError(
+        "Transaction already processed",
+        400,
+        "TRANSACTION_ALREADY_PROCESSED",
+      );
     }
 
     tx.status = status;
@@ -374,7 +405,8 @@ class AdminService {
     // Send notification email
     const user = await User.findById(tx.userId);
     if (user) {
-      const templateType = tx.type === "deposit" ? "DEPOSIT_UPDATE" : "WITHDRAW_UPDATE";
+      const templateType =
+        tx.type === "deposit" ? "DEPOSIT_UPDATE" : "WITHDRAW_UPDATE";
       mailService.sendTemplatedEmail(templateType, user.email, {
         NAME: user.name,
         TYPE: tx.type,
@@ -387,8 +419,8 @@ class AdminService {
 
     this.createAuditLog({
       userType: "admin",
-      log: `Admin ${status} ${tx.type} transaction for ${user?.email || 'Unknown User'}`,
-      metadata: { transactionId, status }
+      log: `Admin ${status} ${tx.type} transaction for ${user?.email || "Unknown User"}`,
+      metadata: { transactionId, status },
     });
 
     return tx;

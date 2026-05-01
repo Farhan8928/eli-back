@@ -2,11 +2,11 @@ import express from "express";
 import { authController } from "../controllers/auth.controller.js";
 import { validateRequest } from "../../../middlewares/validateRequest.js";
 import { asyncHandler } from "../../../common/utils/asyncHandler.js";
-import { 
-  authRegisterSchema, 
-  authLoginSchema, 
+import {
+  authRegisterSchema,
+  authLoginSchema,
   authVerifyOtpSchema,
-  authForgotPasswordSchema
+  authForgotPasswordSchema,
 } from "../auth.validation.js";
 
 const authRoutes = express.Router();

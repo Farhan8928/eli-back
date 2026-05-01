@@ -22,7 +22,9 @@ const adminUpdateUserSchema = z.object({
     .object({
       name: z.string().trim().min(2).max(120).optional(),
       role: z.enum(["client", "superadmin", "representative"]).optional(),
-      status: z.enum(["pending", "approved", "rejected", "processing", "disabled"]).optional(),
+      status: z
+        .enum(["pending", "approved", "rejected", "processing", "disabled"])
+        .optional(),
       kycStatus: z.enum(["pending", "approved", "rejected"]).optional(),
       phone: z.string().optional(),
       address: z.string().optional(),
@@ -30,19 +32,23 @@ const adminUpdateUserSchema = z.object({
       state: z.string().optional(),
       country: z.string().optional(),
       zipCode: z.string().optional(),
-      bankDetails: z.object({
-        accountName: z.string().optional(),
-        bankName: z.string().optional(),
-        accountNumber: z.string().optional(),
-        ifsc: z.string().optional(),
-        branchName: z.string().optional(),
-      }).optional(),
-      socialMedia: z.object({
-        facebook: z.string().url().optional().or(z.literal("")),
-        twitter: z.string().url().optional().or(z.literal("")),
-        instagram: z.string().url().optional().or(z.literal("")),
-        youtube: z.string().url().optional().or(z.literal("")),
-      }).optional(),
+      bankDetails: z
+        .object({
+          accountName: z.string().optional(),
+          bankName: z.string().optional(),
+          accountNumber: z.string().optional(),
+          ifsc: z.string().optional(),
+          branchName: z.string().optional(),
+        })
+        .optional(),
+      socialMedia: z
+        .object({
+          facebook: z.string().url().optional().or(z.literal("")),
+          twitter: z.string().url().optional().or(z.literal("")),
+          instagram: z.string().url().optional().or(z.literal("")),
+          youtube: z.string().url().optional().or(z.literal("")),
+        })
+        .optional(),
     })
     .refine((v) => Object.keys(v).length > 0, {
       message: "At least one field is required",

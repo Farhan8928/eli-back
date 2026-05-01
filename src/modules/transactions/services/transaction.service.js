@@ -43,7 +43,7 @@ class TransactionService {
     await AuditLog.create({
       userType: "client",
       log: `Client requested a deposit of $${payload.amount}`,
-      metadata: { userId: userContext.id, transactionId: tx._id }
+      metadata: { userId: userContext.id, transactionId: tx._id },
     });
 
     return tx;
@@ -53,7 +53,11 @@ class TransactionService {
     // Check if user has bank details
     const user = await this.userRepository.findById(userContext.id);
     if (!user.bankDetails || !user.bankDetails.accountNumber) {
-      throw new AppError("Please update your bank details before withdrawing", 400, "BANK_DETAILS_REQUIRED");
+      throw new AppError(
+        "Please update your bank details before withdrawing",
+        400,
+        "BANK_DETAILS_REQUIRED",
+      );
     }
 
     const tx = await this.transactionRepository.create({
@@ -68,7 +72,7 @@ class TransactionService {
     await AuditLog.create({
       userType: "client",
       log: `Client requested a withdrawal of $${payload.amount}`,
-      metadata: { userId: userContext.id, transactionId: tx._id }
+      metadata: { userId: userContext.id, transactionId: tx._id },
     });
 
     return tx;
