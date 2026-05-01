@@ -12,6 +12,7 @@ const adminListClientsSchema = z.object({
   query: z.object({
     page: pageSchema,
     limit: limitSchema,
+    search: z.string().optional(),
   }),
 });
 

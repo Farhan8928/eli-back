@@ -13,15 +13,25 @@ class UserRepository {
     return User.findById(userId);
   }
 
-  async findAllClients({ page, limit }) {
+  async findAllClients({ page, limit, search }) {
     const skip = (page - 1) * limit;
+    const filter = { 
+      role: "client",
+      ...(search ? {
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } }
+        ]
+      } : {})
+    };
+
     const [items, total] = await Promise.all([
-      User.find({ role: "client" })
+      User.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .select("-password"),
-      User.countDocuments({ role: "client" }),
+      User.countDocuments(filter),
     ]);
 
     return { items, total };
