@@ -2,6 +2,7 @@ import { AppError } from "../../../common/errors/AppError.js";
 import { Mt5AccountRepository } from "../repositories/mt5Account.repository.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
 import { Mt5Client } from "../../../integrations/mt5/mt5.client.js";
+import { AuditLog } from "../../admin/models/auditLog.model.js";
 
 class Mt5AccountService {
   constructor() {
@@ -40,6 +41,12 @@ class Mt5AccountService {
       accountId: account._id,
       login: account.login,
       type: account.type,
+    });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client created new MT5 account: ${account.login}`,
+      metadata: { userId: user._id, login: account.login, type: account.type }
     });
 
     return {
@@ -95,6 +102,13 @@ class Mt5AccountService {
     }
 
     await this.mt5Client.resetPassword({ login, newPassword });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client reset password for MT5 account: ${login}`,
+      metadata: { userId: userContext.id, login }
+    });
+
     return { login, reset: true };
   }
 }

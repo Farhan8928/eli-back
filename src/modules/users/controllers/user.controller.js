@@ -1,6 +1,7 @@
 import { UserRepository } from "../repositories/user.repository.js";
 import { AppError } from "../../../common/errors/AppError.js";
 import { apiResponse } from "../../../common/utils/apiResponse.js";
+import { AuditLog } from "../../admin/models/auditLog.model.js";
 import bcrypt from "bcryptjs";
 
 const userRepository = new UserRepository();
@@ -27,6 +28,12 @@ const userController = {
 
     const updated = await userRepository.updateById(req.user.id, { $set: updatePayload });
     
+    await AuditLog.create({
+      userType: "client",
+      log: `Client updated profile information`,
+      metadata: { userId: req.user.id, updates: updatePayload }
+    });
+
     return res.status(200).json(apiResponse({ 
       message: "Profile updated successfully", 
       data: updated 
@@ -36,6 +43,12 @@ const userController = {
   updateBankDetails: async (req, res) => {
     const { bankDetails } = req.body;
     const updated = await userRepository.updateById(req.user.id, { $set: { bankDetails } });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client updated bank details`,
+      metadata: { userId: req.user.id }
+    });
 
     return res.status(200).json(apiResponse({ 
       message: "Bank details updated successfully", 
@@ -53,6 +66,12 @@ const userController = {
     const hash = await bcrypt.hash(newPassword, 12);
     await userRepository.updateById(req.user.id, { $set: { password: hash } });
 
+    await AuditLog.create({
+      userType: "client",
+      log: `Client changed their password`,
+      metadata: { userId: req.user.id }
+    });
+
     return res.status(200).json(apiResponse({ message: "Password changed successfully" }));
   },
 
@@ -63,6 +82,12 @@ const userController = {
     if (addressProofUrl) kycPayload.addressProofUrl = addressProofUrl;
 
     const updated = await userRepository.updateById(req.user.id, { $set: kycPayload });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client submitted KYC documents`,
+      metadata: { userId: req.user.id }
+    });
 
     return res.status(200).json(apiResponse({ 
       message: "KYC documents submitted for review",

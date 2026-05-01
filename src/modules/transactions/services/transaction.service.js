@@ -1,6 +1,7 @@
 import { AppError } from "../../../common/errors/AppError.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
 import { TransactionRepository } from "../repositories/transaction.repository.js";
+import { AuditLog } from "../../admin/models/auditLog.model.js";
 
 class TransactionService {
   constructor() {
@@ -29,7 +30,7 @@ class TransactionService {
   }
 
   async requestDeposit(userContext, payload) {
-    return this.transactionRepository.create({
+    const tx = await this.transactionRepository.create({
       userId: userContext.id,
       type: "deposit",
       amount: payload.amount,
@@ -38,6 +39,14 @@ class TransactionService {
       proofUrl: payload.proofUrl || null,
       note: payload.note || "",
     });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client requested a deposit of $${payload.amount}`,
+      metadata: { userId: userContext.id, transactionId: tx._id }
+    });
+
+    return tx;
   }
 
   async requestWithdrawal(userContext, payload) {
@@ -47,7 +56,7 @@ class TransactionService {
       throw new AppError("Please update your bank details before withdrawing", 400, "BANK_DETAILS_REQUIRED");
     }
 
-    return this.transactionRepository.create({
+    const tx = await this.transactionRepository.create({
       userId: userContext.id,
       type: "withdraw",
       amount: payload.amount,
@@ -55,6 +64,14 @@ class TransactionService {
       method: "bank_transfer",
       note: payload.note || "",
     });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client requested a withdrawal of $${payload.amount}`,
+      metadata: { userId: userContext.id, transactionId: tx._id }
+    });
+
+    return tx;
   }
 }
 
