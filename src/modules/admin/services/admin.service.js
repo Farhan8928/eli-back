@@ -49,6 +49,13 @@ class AdminService {
     if (!updated) {
       throw new AppError("User not found", 404, "USER_NOT_FOUND");
     }
+
+    this.createAuditLog({
+      userType: "admin",
+      log: `Admin changed password for user ${updated.email}`,
+      metadata: { userId }
+    });
+
     return { success: true };
   }
 
@@ -57,6 +64,13 @@ class AdminService {
     if (!deleted) {
       throw new AppError("User not found", 404, "USER_NOT_FOUND");
     }
+
+    this.createAuditLog({
+      userType: "admin",
+      log: `Admin deleted user account ${deleted.email}`,
+      metadata: { userId }
+    });
+
     return { id: userId, deleted: true };
   }
 
@@ -131,11 +145,19 @@ class AdminService {
   async listAuditLogs(query) {
     const page = parseInt(query.page || 1, 10);
     const limit = parseInt(query.limit || 10, 10);
+    const search = query.search || "";
     const skip = (page - 1) * limit;
 
+    const filter = search ? {
+      $or: [
+        { log: { $regex: search, $options: "i" } },
+        { userType: { $regex: search, $options: "i" } }
+      ]
+    } : {};
+
     const [items, total] = await Promise.all([
-      AuditLog.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-      AuditLog.countDocuments()
+      AuditLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      AuditLog.countDocuments(filter)
     ]);
 
     return { items, total };
@@ -147,7 +169,13 @@ class AdminService {
 
   // Plans Management
   async createPlan(payload) {
-    return Plan.create(payload);
+    const plan = await Plan.create(payload);
+    this.createAuditLog({
+      userType: "admin",
+      log: `Admin created new plan: ${plan.name}`,
+      metadata: payload
+    });
+    return plan;
   }
 
   async updatePlan(planId, payload) {
@@ -236,6 +264,12 @@ class AdminService {
       role: "representative",
       kycStatus: "approved",
       ...payload, // Include status if passed
+    });
+
+    this.createAuditLog({
+      userType: "admin",
+      log: `Admin created new representative: ${user.email}`,
+      metadata: { name: user.name, email: user.email }
     });
 
     return user;

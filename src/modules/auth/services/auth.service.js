@@ -5,6 +5,7 @@ import { UserRepository } from "../../users/repositories/user.repository.js";
 import { AppError } from "../../../common/errors/AppError.js";
 
 import { mailService } from "../../admin/services/mail.service.js";
+import { AuditLog } from "../../admin/models/auditLog.model.js";
 
 class AuthService {
   constructor() {
@@ -65,6 +66,12 @@ class AuthService {
       otpExpiresAt,
     });
 
+    await AuditLog.create({
+      userType: "system",
+      log: `New user registered: ${user.email}`,
+      metadata: { userId: user._id }
+    });
+
     // Send OTP Email
     await mailService.sendTemplatedEmail("WELCOME_EMAIL", user.email, {
       NAME: user.name,
@@ -93,6 +100,12 @@ class AuthService {
     user.otpExpiresAt = null;
     user.status = "approved"; // Automatically approve on email verification or keep pending?
     await user.save();
+
+    await AuditLog.create({
+      userType: "system",
+      log: `User email verified: ${user.email}`,
+      metadata: { userId: user._id }
+    });
 
     const token = this.signToken(user);
 
@@ -124,6 +137,12 @@ class AuthService {
     }
 
     const token = this.signToken(user);
+
+    await AuditLog.create({
+      userType: user.role,
+      log: `${user.role} logged in: ${user.email}`,
+      metadata: { userId: user._id }
+    });
 
     return {
       token,
@@ -166,6 +185,12 @@ class AuthService {
     }
 
     const token = this.signToken(user);
+
+    await AuditLog.create({
+      userType: "admin",
+      log: `Admin impersonated user: ${user.email}`,
+      metadata: { userId: user._id }
+    });
 
     return {
       token,
