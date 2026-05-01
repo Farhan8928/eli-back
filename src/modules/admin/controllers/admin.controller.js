@@ -3,6 +3,16 @@ import { AdminService } from "../services/admin.service.js";
 import {
   toClientDto,
   toClientsListDto,
+  toPlanDto,
+  toPlansListDto,
+  toEmailerDto,
+  toEmailersListDto,
+  toRepresentativeDto,
+  toRepresentativesListDto,
+  toMt5AccountDto,
+  toMt5AccountsListDto,
+  toTransactionDto,
+  toTransactionsListDto,
   toDeleteUserDto,
   toAdminAnalyticsDto,
 } from "../dto/manageUser.dto.js";
@@ -38,6 +48,18 @@ const adminController = {
     );
   },
 
+  changeUserPassword: async (req, res) => {
+    await adminService.changeUserPassword(
+      req.validated.params.userId,
+      req.validated.body.password,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "User password updated successfully",
+      }),
+    );
+  },
+
   deleteUser: async (req, res) => {
     const result = await adminService.deleteUser(req.validated.params.userId);
     return res.status(200).json(
@@ -48,12 +70,222 @@ const adminController = {
     );
   },
 
-  analytics: async (req, res) => {
-    const result = await adminService.getSystemAnalytics();
+  dashboardCharts: async (req, res) => {
+    const result = await adminService.getDashboardCharts();
     return res.status(200).json(
       apiResponse({
-        message: "System analytics fetched successfully",
-        data: toAdminAnalyticsDto(result),
+        message: "Dashboard charts fetched successfully",
+        data: result,
+      }),
+    );
+  },
+
+  listAuditLogs: async (req, res) => {
+    const result = await adminService.listAuditLogs(req.query);
+    return res.status(200).json(
+      apiResponse({
+        message: "Audit logs fetched successfully",
+        data: result.items,
+        meta: {
+          total: result.total,
+          page: Number(req.query.page || 1),
+          limit: Number(req.query.limit || 10),
+        },
+      }),
+    );
+  },
+
+  // Plans
+  createPlan: async (req, res) => {
+    const result = await adminService.createPlan(req.validated.body);
+    return res.status(201).json(
+      apiResponse({
+        message: "Plan created successfully",
+        data: toPlanDto(result),
+      }),
+    );
+  },
+
+  updatePlan: async (req, res) => {
+    const result = await adminService.updatePlan(
+      req.params.planId,
+      req.validated.body,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "Plan updated successfully",
+        data: toPlanDto(result),
+      }),
+    );
+  },
+
+  deletePlan: async (req, res) => {
+    const result = await adminService.deletePlan(req.params.planId);
+    return res.status(200).json(
+      apiResponse({
+        message: "Plan deleted successfully",
+        data: result,
+      }),
+    );
+  },
+
+  listPlans: async (req, res) => {
+    const result = await adminService.listPlans(req.validated.query);
+    return res.status(200).json(
+      apiResponse({
+        message: "Plans fetched successfully",
+        data: toPlansListDto(result.items),
+        meta: {
+          total: result.total,
+          page: Number(req.validated.query.page || 1),
+          limit: Number(req.validated.query.limit || 10),
+        },
+      }),
+    );
+  },
+
+  // SMTP
+  upsertSmtp: async (req, res) => {
+    const result = await adminService.upsertSmtp(req.validated.body);
+    return res.status(200).json(
+      apiResponse({
+        message: "SMTP configuration saved successfully",
+        data: result,
+      }),
+    );
+  },
+
+  getSmtp: async (req, res) => {
+    const result = await adminService.getSmtp();
+    return res.status(200).json(
+      apiResponse({
+        message: "SMTP configuration fetched successfully",
+        data: result,
+      }),
+    );
+  },
+
+  // Emailer
+  createEmailer: async (req, res) => {
+    const result = await adminService.createEmailer(req.validated.body);
+    return res.status(201).json(
+      apiResponse({
+        message: "Emailer created successfully",
+        data: result,
+      }),
+    );
+  },
+
+  updateEmailer: async (req, res) => {
+    const result = await adminService.updateEmailer(
+      req.params.emailerId,
+      req.validated.body,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "Emailer updated successfully",
+        data: toEmailerDto(result),
+      }),
+    );
+  },
+
+  deleteEmailer: async (req, res) => {
+    const result = await adminService.deleteEmailer(req.params.emailerId);
+    return res.status(200).json(
+      apiResponse({
+        message: "Emailer deleted successfully",
+        data: result,
+      }),
+    );
+  },
+
+  listEmailers: async (req, res) => {
+    const result = await adminService.listEmailers(req.validated.query);
+    return res.status(200).json(
+      apiResponse({
+        message: "Emailers fetched successfully",
+        data: toEmailersListDto(result.items),
+        meta: {
+          total: result.total,
+          page: Number(req.validated.query.page || 1),
+          limit: Number(req.validated.query.limit || 10),
+        },
+      }),
+    );
+  },
+
+  // Representatives
+  createRepresentative: async (req, res) => {
+    const result = await adminService.createRepresentative(req.validated.body);
+    return res.status(201).json(
+      apiResponse({
+        message: "Representative created successfully",
+        data: {
+          id: result._id,
+          name: result.name,
+          email: result.email,
+          role: result.role,
+        },
+      }),
+    );
+  },
+
+  listRepresentatives: async (req, res) => {
+    const result = await adminService.listRepresentatives(req.validated.query);
+    return res.status(200).json(
+      apiResponse({
+        message: "Representatives fetched successfully",
+        data: toRepresentativesListDto(result.items),
+        meta: {
+          total: result.total,
+          page: Number(req.validated.query.page || 1),
+          limit: Number(req.validated.query.limit || 10),
+        },
+      }),
+    );
+  },
+
+  // MT5 Accounts
+  listMt5Accounts: async (req, res) => {
+    const result = await adminService.listMt5Accounts(req.validated.query);
+    return res.status(200).json(
+      apiResponse({
+        message: "MT5 Accounts fetched successfully",
+        data: toMt5AccountsListDto(result.items),
+        meta: {
+          total: result.total,
+          page: Number(req.validated.query.page || 1),
+          limit: Number(req.validated.query.limit || 10),
+        },
+      }),
+    );
+  },
+
+  // Transactions
+  listTransactions: async (req, res) => {
+    const result = await adminService.listTransactions(req.validated.query);
+    return res.status(200).json(
+      apiResponse({
+        message: "Transactions fetched successfully",
+        data: toTransactionsListDto(result.items),
+        meta: {
+          total: result.total,
+          page: Number(req.validated.query.page || 1),
+          limit: Number(req.validated.query.limit || 10),
+        },
+      }),
+    );
+  },
+
+  updateTransactionStatus: async (req, res) => {
+    const result = await adminService.updateTransactionStatus(
+      req.validated.params.transactionId,
+      req.validated.body.status,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "Transaction status updated successfully",
+        data: toTransactionDto(result),
       }),
     );
   },

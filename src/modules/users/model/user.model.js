@@ -43,8 +43,14 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["client", "superadmin"],
+      enum: ["client", "superadmin", "representative"],
       default: "client",
+      index: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "processing", "disabled"],
+      default: "pending",
       index: true,
     },
     kycStatus: {
@@ -53,9 +59,32 @@ const userSchema = new mongoose.Schema(
       default: "pending",
       index: true,
     },
+    phone: String,
+    address: String,
+    city: String,
+    state: String,
+    country: String,
+    zipCode: String,
+    socialMedia: {
+      facebook: String,
+      twitter: String,
+      instagram: String,
+      youtube: String,
+    },
+    bankDetails: {
+      accountName: String,
+      bankName: String,
+      accountNumber: String,
+      ifsc: String,
+      branchName: String,
+    },
     mt5Accounts: {
       type: [mt5AccountRefSchema],
       default: [],
+    },
+    referralBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {

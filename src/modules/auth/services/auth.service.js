@@ -4,6 +4,8 @@ import { jwtSecret, jwtExpiresIn } from "../../../config/env.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
 import { AppError } from "../../../common/errors/AppError.js";
 
+import { mailService } from "../../admin/services/mail.service.js";
+
 class AuthService {
   constructor() {
     this.userRepository = new UserRepository();
@@ -34,6 +36,12 @@ class AuthService {
       password: hash,
       role: "client",
       kycStatus: "pending",
+    });
+
+    // Send Welcome Email (Non-blocking)
+    mailService.sendTemplatedEmail("WELCOME_EMAIL", user.email, {
+      NAME: user.name,
+      EMAIL: user.email,
     });
 
     const token = this.signToken(user);
