@@ -13,10 +13,11 @@ class UserRepository {
     return User.findById(userId);
   }
 
-  async findAllClients({ page, limit, search }) {
+  async findAllClients({ page, limit, search, kycStatus }) {
     const skip = (page - 1) * limit;
     const filter = { 
       role: "client",
+      ...(kycStatus && kycStatus !== "all" ? { kycStatus } : {}),
       ...(search ? {
         $or: [
           { name: { $regex: search, $options: "i" } },

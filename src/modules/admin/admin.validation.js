@@ -13,6 +13,7 @@ const adminListClientsSchema = z.object({
     page: pageSchema,
     limit: limitSchema,
     search: z.string().optional(),
+    kycStatus: z.string().optional(),
   }),
 });
 
