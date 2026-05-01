@@ -22,7 +22,15 @@ const transactionSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["pending", "completed", "rejected"],
-      default: "completed",
+      default: "pending",
+    },
+    method: {
+      type: String,
+      default: "bank_transfer", // e.g. "bank_transfer", "qr_code"
+    },
+    proofUrl: {
+      type: String,
+      default: null,
     },
     note: {
       type: String,
@@ -31,7 +39,7 @@ const transactionSchema = new mongoose.Schema(
     performedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false, // Optional for client-initiated
     },
   },
   {

@@ -19,7 +19,14 @@ import {
 
 const adminRoutes = express.Router();
 
-adminRoutes.use(authGuard, roleGuard("superadmin"));
+adminRoutes.use(authGuard);
+
+// Stats (Shared but logic is internal to controller)
+adminRoutes.get("/stats/client", asyncHandler(adminController.getClientDashboardStats));
+adminRoutes.get("/stats/admin", roleGuard("superadmin"), asyncHandler(adminController.getDashboardStats));
+adminRoutes.post("/users/:userId/impersonate", roleGuard("superadmin"), asyncHandler(adminController.impersonateUser));
+
+adminRoutes.use(roleGuard("superadmin"));
 
 adminRoutes.get(
   "/clients",

@@ -6,7 +6,7 @@ class UserRepository {
   }
 
   async findByEmail(email) {
-    return User.findOne({ email });
+    return User.findOne({ email: email.toLowerCase() });
   }
 
   async findById(userId) {

@@ -87,6 +87,16 @@ class Mt5AccountService {
     await this.mt5Client.resetPassword({ login, newPassword });
     return { login, reset: true };
   }
+
+  async resetPasswordByClient(userContext, login, newPassword) {
+    const account = await this.mt5AccountRepository.findByLogin(login);
+    if (!account || String(account.userId) !== String(userContext.id)) {
+      throw new AppError("MT5 account not found or access denied", 404, "MT5_ACCOUNT_NOT_FOUND");
+    }
+
+    await this.mt5Client.resetPassword({ login, newPassword });
+    return { login, reset: true };
+  }
 }
 
 export { Mt5AccountService };

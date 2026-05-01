@@ -32,4 +32,11 @@ mt5AccountRoutes.post(
   asyncHandler(mt5AccountController.resetPasswordByAdmin),
 );
 
+mt5AccountRoutes.post(
+  "/reset-password-client",
+  roleGuard("client"),
+  validateRequest(mt5ResetPasswordSchema),
+  asyncHandler(mt5AccountController.resetPasswordByClient),
+);
+
 export { mt5AccountRoutes };

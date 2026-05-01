@@ -1,5 +1,6 @@
 import { apiResponse } from "../../../common/utils/apiResponse.js";
 import { AdminService } from "../services/admin.service.js";
+import { AuthService } from "../../auth/services/auth.service.js";
 import {
   toClientDto,
   toClientsListDto,
@@ -16,8 +17,12 @@ import {
   toDeleteUserDto,
   toAdminAnalyticsDto,
 } from "../dto/manageUser.dto.js";
+import { User } from "../../users/model/user.model.js";
+import { Mt5Account } from "../../mt5Accounts/model/mt5Account.model.js";
+import { Transaction } from "../../transactions/model/transaction.model.js";
 
 const adminService = new AdminService();
+const authService = new AuthService();
 
 const adminController = {
   listClients: async (req, res) => {
@@ -66,6 +71,16 @@ const adminController = {
       apiResponse({
         message: "User deleted successfully",
         data: toDeleteUserDto(result),
+      }),
+    );
+  },
+
+  analytics: async (req, res) => {
+    const result = await adminService.getSystemAnalytics();
+    return res.status(200).json(
+      apiResponse({
+        message: "Analytics fetched successfully",
+        data: result,
       }),
     );
   },
@@ -288,6 +303,61 @@ const adminController = {
         data: toTransactionDto(result),
       }),
     );
+  },
+
+  getDashboardStats: async (req, res) => {
+    const [totalClients, totalMt5Accounts, pendingTransactions, totalDeposits] = await Promise.all([
+      User.countDocuments({ role: "client" }),
+      Mt5Account.countDocuments({}),
+      Transaction.countDocuments({ status: "pending" }),
+      Transaction.aggregate([
+        { $match: { type: "deposit", status: "completed" } },
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ])
+    ]);
+
+    return res.status(200).json(apiResponse({
+      data: {
+        totalClients,
+        totalMt5Accounts,
+        pendingTransactions,
+        totalDeposits: totalDeposits[0]?.total || 0
+      }
+    }));
+  },
+
+  getClientDashboardStats: async (req, res) => {
+    const userId = req.user.id;
+    
+    const [accounts, transactions] = await Promise.all([
+      Mt5Account.find({ userId: userId }),
+      Transaction.find({ userId: userId })
+    ]);
+
+    const totalBalance = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+    const totalEquity = accounts.reduce((sum, acc) => sum + (acc.equity || 0), 0);
+    const pendingWithdrawals = transactions
+      .filter(t => t.type === 'withdrawal' && t.status === 'pending')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return res.status(200).json(apiResponse({
+      data: {
+        accountCount: accounts.length,
+        totalBalance,
+        totalEquity,
+        pendingWithdrawals,
+        recentTransactions: transactions.slice(-5)
+      }
+    }));
+  },
+
+  impersonateUser: async (req, res) => {
+    const { userId } = req.params;
+    const result = await authService.impersonateUser(userId);
+    return res.status(200).json(apiResponse({
+      message: "Impersonation successful",
+      data: result
+    }));
   },
 };
 

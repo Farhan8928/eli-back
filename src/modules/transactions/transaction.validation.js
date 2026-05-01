@@ -15,4 +15,15 @@ const transactionCreateManualSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-export { transactionCreateManualSchema };
+const transactionRequestSchema = z.object({
+  body: z.object({
+    amount: z.number().min(1),
+    method: z.string().optional().default("bank_transfer"),
+    proofUrl: z.string().optional(),
+    note: z.string().max(250).optional().default(""),
+  }),
+  params: emptyObjectPassthroughSchema,
+  query: emptyObjectPassthroughSchema,
+});
+
+export { transactionCreateManualSchema, transactionRequestSchema };

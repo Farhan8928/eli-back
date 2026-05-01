@@ -5,6 +5,7 @@ import { Mt5Account } from "../../mt5Accounts/model/mt5Account.model.js";
 import { Transaction } from "../../transactions/model/transaction.model.js";
 import { Plan } from "../models/plan.model.js";
 import { EmailerConfig } from "../models/emailer.model.js";
+import { SmtpConfig } from "../models/smtp.model.js";
 import { AuditLog } from "../models/auditLog.model.js";
 import bcrypt from "bcryptjs";
 import { mailService } from "./mail.service.js";

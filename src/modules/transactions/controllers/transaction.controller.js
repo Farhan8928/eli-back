@@ -30,6 +30,32 @@ const transactionController = {
       }),
     );
   },
+
+  requestDeposit: async (req, res) => {
+    const result = await transactionService.requestDeposit(
+      req.user,
+      req.validated.body,
+    );
+    return res.status(201).json(
+      apiResponse({
+        message: "Deposit request submitted successfully",
+        data: toTransactionDto(result),
+      }),
+    );
+  },
+
+  requestWithdrawal: async (req, res) => {
+    const result = await transactionService.requestWithdrawal(
+      req.user,
+      req.validated.body,
+    );
+    return res.status(201).json(
+      apiResponse({
+        message: "Withdrawal request submitted successfully",
+        data: toTransactionDto(result),
+      }),
+    );
+  },
 };
 
 export { transactionController };

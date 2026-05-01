@@ -27,6 +27,35 @@ class TransactionService {
   async getMine(user) {
     return this.transactionRepository.findByUserId(user.id);
   }
+
+  async requestDeposit(userContext, payload) {
+    return this.transactionRepository.create({
+      userId: userContext.id,
+      type: "deposit",
+      amount: payload.amount,
+      status: "pending",
+      method: payload.method || "bank_transfer",
+      proofUrl: payload.proofUrl || null,
+      note: payload.note || "",
+    });
+  }
+
+  async requestWithdrawal(userContext, payload) {
+    // Check if user has bank details
+    const user = await this.userRepository.findById(userContext.id);
+    if (!user.bankDetails || !user.bankDetails.accountNumber) {
+      throw new AppError("Please update your bank details before withdrawing", 400, "BANK_DETAILS_REQUIRED");
+    }
+
+    return this.transactionRepository.create({
+      userId: userContext.id,
+      type: "withdraw",
+      amount: payload.amount,
+      status: "pending",
+      method: "bank_transfer",
+      note: payload.note || "",
+    });
+  }
 }
 
 export { TransactionService };

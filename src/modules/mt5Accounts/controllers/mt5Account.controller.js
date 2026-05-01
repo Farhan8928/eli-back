@@ -44,6 +44,20 @@ const mt5AccountController = {
       }),
     );
   },
+
+  resetPasswordByClient: async (req, res) => {
+    const result = await mt5AccountService.resetPasswordByClient(
+      req.user,
+      req.validated.body.login,
+      req.validated.body.newPassword,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "MT5 password reset successful",
+        data: toResetMt5PasswordDto(result),
+      }),
+    );
+  },
 };
 
 export { mt5AccountController };
