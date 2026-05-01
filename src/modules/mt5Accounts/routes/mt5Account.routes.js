@@ -18,6 +18,12 @@ mt5AccountRoutes.get(
   roleGuard("client"),
   asyncHandler(mt5AccountController.getMine),
 );
+
+mt5AccountRoutes.get(
+  "/plans",
+  roleGuard("client"),
+  asyncHandler(mt5AccountController.listPlans),
+);
 mt5AccountRoutes.post(
   "/mine",
   roleGuard("client"),

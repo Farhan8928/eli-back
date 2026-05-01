@@ -172,7 +172,7 @@ class AdminService {
     const plan = await Plan.create(payload);
     this.createAuditLog({
       userType: "admin",
-      log: `Admin created new plan: ${plan.name}`,
+      log: `Admin created new plan: ${plan.planName}`,
       metadata: payload
     });
     return plan;
@@ -193,12 +193,50 @@ class AdminService {
   async listPlans(query) {
     const page = parseInt(query.page || 1, 10);
     const limit = parseInt(query.limit || 10, 10);
+    const search = query.search || "";
     const skip = (page - 1) * limit;
 
-    const [items, total] = await Promise.all([
-      Plan.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Plan.countDocuments(),
+    const filter = search ? {
+      $or: [
+        { planName: { $regex: search, $options: "i" } },
+        { groupName: { $regex: search, $options: "i" } }
+      ]
+    } : {};
+
+    let [items, total] = await Promise.all([
+      Plan.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Plan.countDocuments(filter),
     ]);
+
+    // Auto-seed default plans if empty and no search is active
+    if (total === 0 && !search && page === 1) {
+      const defaultPlans = [
+        {
+          planName: 'Elite Standard',
+          groupName: 'Real\\EliteFX_Standard',
+          leverage: '1:100',
+          minDeposit: 100,
+          active: true
+        },
+        {
+          planName: 'Elite ECN',
+          groupName: 'Real\\EliteFX_ECN',
+          leverage: '1:100',
+          minDeposit: 500,
+          active: true
+        },
+        {
+          planName: 'Elite Pro',
+          groupName: 'Real\\EliteFX_Pro',
+          leverage: '1:100',
+          minDeposit: 1000,
+          active: true
+        }
+      ];
+      await Plan.insertMany(defaultPlans);
+      items = await Plan.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
+      total = defaultPlans.length;
+    }
 
     return { items, total };
   }

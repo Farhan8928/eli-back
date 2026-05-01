@@ -132,6 +132,7 @@ const adminListGenericSchema = z.object({
   query: z.object({
     page: pageSchema.optional(),
     limit: limitSchema.optional(),
+    search: z.string().optional(),
   }),
 });
 

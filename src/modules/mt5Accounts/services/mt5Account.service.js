@@ -3,12 +3,17 @@ import { Mt5AccountRepository } from "../repositories/mt5Account.repository.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
 import { Mt5Client } from "../../../integrations/mt5/mt5.client.js";
 import { AuditLog } from "../../admin/models/auditLog.model.js";
+import { Plan } from "../../admin/models/plan.model.js";
 
 class Mt5AccountService {
   constructor() {
     this.mt5AccountRepository = new Mt5AccountRepository();
     this.userRepository = new UserRepository();
     this.mt5Client = new Mt5Client();
+  }
+
+  async listPlans() {
+    return Plan.find({ active: true }).sort({ minDeposit: 1 });
   }
 
   async createByClient(userContext, payload) {

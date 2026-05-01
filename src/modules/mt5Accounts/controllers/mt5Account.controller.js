@@ -5,6 +5,7 @@ import {
   toCreateMt5AccountDto,
   toResetMt5PasswordDto,
 } from "../dto/createMt5Account.dto.js";
+import { toPlansListDto } from "../../admin/dto/manageUser.dto.js";
 
 const mt5AccountService = new Mt5AccountService();
 
@@ -55,6 +56,16 @@ const mt5AccountController = {
       apiResponse({
         message: "MT5 password reset successful",
         data: toResetMt5PasswordDto(result),
+      }),
+    );
+  },
+
+  listPlans: async (req, res) => {
+    const result = await mt5AccountService.listPlans();
+    return res.status(200).json(
+      apiResponse({
+        message: "Plans fetched successfully",
+        data: toPlansListDto(result),
       }),
     );
   },
