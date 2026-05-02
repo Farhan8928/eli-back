@@ -8,7 +8,6 @@ import {
   toPlansListDto,
   toEmailerDto,
   toEmailersListDto,
-  toRepresentativeDto,
   toRepresentativesListDto,
   toMt5AccountsListDto,
   toTransactionDto,
