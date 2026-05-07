@@ -98,6 +98,9 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    avatarUrl: String,
+    idProofUrl: String,
+    addressProofUrl: String,
   },
   {
     timestamps: true,

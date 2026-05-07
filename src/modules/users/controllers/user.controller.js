@@ -107,6 +107,52 @@ const userController = {
       }),
     );
   },
+
+  uploadKycIdProof: async (req, res) => {
+    if (!req.file)
+      throw new AppError("No file uploaded", 400, "NO_FILE");
+
+    const idProofUrl = `/uploads/kyc/${req.file.filename}`;
+    await userRepository.updateById(req.user.id, {
+      $set: { idProofUrl, kycStatus: "pending" },
+    });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client uploaded identity KYC document`,
+      metadata: { userId: req.user.id },
+    });
+
+    return res.status(200).json(
+      apiResponse({
+        message: "Identity document uploaded for review",
+        data: { idProofUrl, kycStatus: "pending" },
+      }),
+    );
+  },
+
+  uploadKycAddressProof: async (req, res) => {
+    if (!req.file)
+      throw new AppError("No file uploaded", 400, "NO_FILE");
+
+    const addressProofUrl = `/uploads/kyc/${req.file.filename}`;
+    await userRepository.updateById(req.user.id, {
+      $set: { addressProofUrl, kycStatus: "pending" },
+    });
+
+    await AuditLog.create({
+      userType: "client",
+      log: `Client uploaded address KYC document`,
+      metadata: { userId: req.user.id },
+    });
+
+    return res.status(200).json(
+      apiResponse({
+        message: "Address proof uploaded for review",
+        data: { addressProofUrl, kycStatus: "pending" },
+      }),
+    );
+  },
 };
 
 export { userController };

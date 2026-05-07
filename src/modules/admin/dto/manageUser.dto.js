@@ -5,6 +5,9 @@ const toClientDto = (user) => ({
   phone: String(user?.phone || ""),
   status: String(user?.status || "pending"),
   kycStatus: String(user?.kycStatus || "pending"),
+  idProofUrl: user?.idProofUrl != null ? String(user.idProofUrl) : null,
+  addressProofUrl:
+    user?.addressProofUrl != null ? String(user.addressProofUrl) : null,
   bankDetails: user?.bankDetails || null,
   createdAt: user?.createdAt || null,
   updatedAt: user?.updatedAt || null,
