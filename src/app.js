@@ -15,6 +15,11 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+/** Uptime pings (cron-job.org, Render keep-warm): keep body under 4 KB (cron-job.org limit). Plain OK is enough. */
+app.get("/health", (_req, res) => {
+  res.status(200).type("text/plain").send("OK");
+});
+
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -40,10 +45,6 @@ app.use(
     legacyHeaders: false,
   }),
 );
-
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
-});
 
 app.use("/api/v1", apiRouter);
 app.use(notFound);
