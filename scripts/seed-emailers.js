@@ -1,13 +1,15 @@
 /**
  * Syncs EmailerConfig with what the backend actually uses:
- * - Inserts missing defaults for: KYC_*, CLIENT_PORTAL_WELCOME, MT5_*, WITHDRAW_UPDATE, DEPOSIT_UPDATE
+ * - Inserts missing defaults for: KYC_*, CLIENT_PORTAL_WELCOME, FORGOT_PASSWORD, MT5_*, WITHDRAW_UPDATE, DEPOSIT_UPDATE
  * - Deletes obsolete types replaced by WITHDRAW_UPDATE / DEPOSIT_UPDATE:
  *   WITHDRAWAL_COMPLETED, WITHDRAWAL_REJECTED, DEPOSIT_COMPLETED, DEPOSIT_REJECTED
  *
- * Skips types you already added manually (e.g. FORGOT_PASSWORD, legacy WELCOME_EMAIL).
+ * Skips any emailerType not listed below (custom admin-only types stay untouched).
  *
  * Run from `elite-fx-back`:
- *   npm run seed:emailers
+ *   npm run seed:emailers              — inserts missing types only (never overwrites)
+ *   npm run seed:emailers:sync         — same + overwrites body/subject/params for defaults below
+ *   (or: npm run seed:emailers -- --sync)
  *
  * Requires MONGO_URI in .env
  */
@@ -26,10 +28,95 @@ if (!mongoUri) {
   process.exit(1);
 }
 
-const wrap = (inner) => `<div style="font-family:Segoe UI,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f8fafc;color:#0f172a;line-height:1.5;">
-${inner}
-<p style="margin-top:24px;font-size:12px;color:#64748b;">Elite FX</p>
-</div>`;
+const syncExisting = process.argv.includes("--sync");
+if (syncExisting) {
+  console.log("Mode: --sync (will overwrite mail subject/body/parameters for seeded types)\n");
+}
+
+/**
+ * Elite FX brand palette — mirrors elite-fx-front/src/index.css
+ * (--primary #2d7df6, --accent / deep navies, --background dark ~214 45% 8%)
+ */
+const BRAND = {
+  primary: "#2d7df6",
+  accentNavy: "#0b1a2b",
+  pageBg: "#070c12",
+  text: "#1e293b",
+  textMuted: "#64748b",
+  textSubtle: "#475569",
+  border: "#e2e8f0",
+  footerBg: "#f8fafc",
+  primarySoft: "#eff6ff",
+  primaryBorder: "#93c5fd",
+  success: "#0d9488",
+  successIcon: "#0f766e",
+  pillFg: "#1e40af",
+  pillBg: "#dbeafe",
+};
+
+const font =
+  "Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
+/** Email-safe HTML shell: tables, inline styles only (broad client support). */
+const wrap = (bodyHtml, tagline = "Elite FX Client Services") => `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elite FX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:${BRAND.pageBg};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${BRAND.pageBg};">
+<tr>
+<td align="center" style="padding:40px 16px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.22),0 0 0 1px rgba(45,125,246,0.06);">
+<tr>
+<td style="background-color:${BRAND.accentNavy};padding:32px 32px 28px;text-align:center;border-bottom:3px solid ${BRAND.primary};">
+<p style="margin:0;font-family:${font};font-size:24px;font-weight:700;letter-spacing:0.08em;color:#ffffff;">ELITE FX</p>
+<p style="margin:10px 0 0;font-family:${font};font-size:13px;line-height:1.4;color:#94a3b8;">${tagline}</p>
+</td>
+</tr>
+<tr>
+<td style="padding:36px 32px;font-family:${font};font-size:16px;line-height:1.65;color:${BRAND.text};">
+${bodyHtml}
+</td>
+</tr>
+<tr>
+<td style="padding:28px 32px;background-color:${BRAND.footerBg};border-top:1px solid ${BRAND.border};">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+<tr>
+<td align="center" style="font-family:${font};font-size:12px;line-height:1.6;color:${BRAND.textMuted};">
+<p style="margin:0 0 8px;"><strong style="color:${BRAND.textSubtle};">Elite FX</strong></p>
+<p style="margin:0;">You are receiving this email because you have an account with us.</p>
+<p style="margin:12px 0 0;font-size:11px;color:#94a3b8;">This is an automated message. For support, use the contact options in your client portal.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>`;
+
+const p = (html) =>
+  `<p style="margin:0 0 16px;font-family:${font};font-size:16px;line-height:1.65;color:${BRAND.text};">${html}</p>`;
+
+const strong = (text) =>
+  `<strong style="color:${BRAND.accentNavy};font-weight:600;">${text}</strong>`;
+
+const infoBox = (html, borderColor = BRAND.primaryBorder, bg = BRAND.primarySoft) =>
+  `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0;border-radius:10px;border:1px solid ${borderColor};background-color:${bg};">
+<tr><td style="padding:20px 22px;font-family:${font};font-size:15px;line-height:1.6;color:${BRAND.textSubtle};">
+${html}
+</td></tr></table>`;
+
+const statusPill = (text) =>
+  `<span style="display:inline-block;padding:6px 14px;font-family:${font};font-size:13px;font-weight:600;color:${BRAND.pillFg};background-color:${BRAND.pillBg};border-radius:999px;">${text}</span>`;
 
 /** Default HTML templates; edit later in Admin → Email Templates */
 const DEFAULT_EMAILERS = [
@@ -38,9 +125,11 @@ const DEFAULT_EMAILERS = [
     mailSubject: "KYC update — {STATUS}",
     mailTemplateParameter: "{NAME}, {STATUS}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>Your verification (KYC) status is now: <strong>{STATUS}</strong>.</p>
-<p>Log in to your portal to complete any outstanding steps.</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`Your verification <strong style="color:${BRAND.accentNavy};">(KYC)</strong> status is now: ${statusPill("{STATUS}")}`)}
+${infoBox(`Log in to your client portal to upload documents or finish any outstanding steps. Our team will review your submission as soon as possible.`, BRAND.primaryBorder, BRAND.primarySoft)}
+${p("Thank you for choosing Elite FX.")}`,
+      "Identity verification update",
     ),
   },
   {
@@ -48,8 +137,11 @@ const DEFAULT_EMAILERS = [
     mailSubject: "Your KYC has been approved",
     mailTemplateParameter: "{NAME}, {STATUS}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>Good news — your KYC is <strong>approved</strong>. You can continue using all eligible features.</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`Great news — your identity verification is ${strong("approved")}. You can now use all features available for verified clients.`)}
+${infoBox(`<span style="color:${BRAND.successIcon};font-weight:600;">✓</span> &nbsp;Your account is fully verified. Explore funding and trading tools from your dashboard.`, "#a7f3d0", "#ecfdf5")}
+${p("Welcome to the next step of your trading journey with Elite FX.")}`,
+      "Verification approved",
     ),
   },
   {
@@ -57,8 +149,11 @@ const DEFAULT_EMAILERS = [
     mailSubject: "KYC update required",
     mailTemplateParameter: "{NAME}, {STATUS}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>We could not approve your documents at this time. Please sign in and upload updated files or contact support.</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p("We weren't able to approve your documents with the files provided.")}
+${infoBox(`Please sign in and ${strong("upload clearer or updated proof")} (ID and address documents as requested). If you need help, contact support with this email in reference.`, "#fecaca", "#fef2f2")}
+${p("We're here to get you verified as smoothly as possible.")}`,
+      "Action needed on your documents",
     ),
   },
   {
@@ -66,9 +161,28 @@ const DEFAULT_EMAILERS = [
     mailSubject: "Welcome to your Elite FX client portal",
     mailTemplateParameter: "{NAME}, {EMAIL}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>Welcome — you are signed in to your trading portal.</p>
-<p>Use the dashboard to manage accounts, funding, and settings. If you need help, reply to this email.</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`Your Elite FX client portal is ready. You're signed in as ${strong("{EMAIL}")}.`)}
+${infoBox(`${strong("What you can do:")}<br><br>
+• View balances and trading accounts<br>
+• Request deposits and withdrawals<br>
+• Manage your profile and verification<br>
+• Download platform guides`, BRAND.primaryBorder, BRAND.primarySoft)}
+${p("If you did not create this account, please contact us immediately.")}`,
+      "Welcome aboard",
+    ),
+  },
+  {
+    emailerType: "FORGOT_PASSWORD",
+    mailSubject: "Your Elite FX password has been reset",
+    mailTemplateParameter: "{NAME}, {PASSWORD}",
+    mailBody: wrap(
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`We received a request to reset your client portal password. A ${strong("temporary password")} has been generated. Sign in with it once, then change your password from your profile.`)}
+${infoBox(`<p style="margin:0 0 10px;font-size:14px;color:${BRAND.textSubtle};">Temporary password</p>
+<p style="margin:0;font-family:Consolas,monospace;font-size:20px;font-weight:700;letter-spacing:0.04em;color:${BRAND.accentNavy};word-break:break-all;">{PASSWORD}</p>`, BRAND.primaryBorder, BRAND.primarySoft)}
+${p(`<span style="font-size:14px;color:${BRAND.textMuted};">For security, do not forward this email. If you did not request a reset, contact support immediately.</span>`)}`,
+      "Password reset",
     ),
   },
   {
@@ -77,10 +191,15 @@ const DEFAULT_EMAILERS = [
     mailTemplateParameter:
       "{NAME}, {EMAIL}, {TYPE}, {LEVERAGE}, {GROUP}, {SUPPORT_EMAIL}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>Thank you for your request. Our team will create your MetaTrader account and email you again when it is ready.</p>
-<p><strong>Requested:</strong> {TYPE} · Leverage 1:{LEVERAGE} · Group {GROUP}</p>
-<p style="word-break:break-all;">If you need help: {SUPPORT_EMAIL}</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`Thank you — we've received your <strong style="color:${BRAND.accentNavy};">MetaTrader 5</strong> account request. Our team will set it up and notify you when it's ready.`)}
+${infoBox(`<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};width:100px;">Type</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">{TYPE}</td></tr>
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};">Leverage</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">1:{LEVERAGE}</td></tr>
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};">Group</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">{GROUP}</td></tr>
+</table>`, BRAND.border, BRAND.footerBg)}
+${p(`Questions? Reach us at: <span style="word-break:break-all;color:${BRAND.primary};">{SUPPORT_EMAIL}</span>`)}`,
+      "MT5 request received",
     ),
   },
   {
@@ -89,12 +208,16 @@ const DEFAULT_EMAILERS = [
     mailTemplateParameter:
       "{NAME}, {EMAIL}, {TYPE}, {LEVERAGE}, {GROUP}, {SUPPORT_EMAIL}",
     mailBody: wrap(
-      `<p><strong>{NAME}</strong> ({EMAIL}) submitted a manual MT5 request.</p>
-<ul style="padding-left:20px;">
-<li>Type: {TYPE}</li>
-<li>Leverage: 1:{LEVERAGE}</li>
-<li>Group: {GROUP}</li>
-</ul>`,
+      `${p(`${strong("New manual MT5 request")} — action may be required in the CRM.`)}
+${infoBox(`<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};width:110px;">Client</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">{NAME}</td></tr>
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};">Email</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};word-break:break-all;">{EMAIL}</td></tr>
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};">Type</td><td style="padding:6px 0;">{TYPE}</td></tr>
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};">Leverage</td><td style="padding:6px 0;">1:{LEVERAGE}</td></tr>
+<tr><td style="padding:6px 0;color:${BRAND.textMuted};">Group</td><td style="padding:6px 0;">{GROUP}</td></tr>
+</table>`, BRAND.primaryBorder, BRAND.primarySoft)}
+${p(`Support contact on file: <span style="word-break:break-all;color:${BRAND.primary};">{SUPPORT_EMAIL}</span>`)}`,
+      "Internal — MT5 provisioning",
     ),
   },
   {
@@ -102,14 +225,15 @@ const DEFAULT_EMAILERS = [
     mailSubject: "Your MetaTrader 5 login details",
     mailTemplateParameter: "{NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {SERVER}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>Your trading account is ready. Log in to MetaTrader 5 with:</p>
-<ul style="padding-left:20px;">
-<li><strong>Login:</strong> {LOGIN}</li>
-<li><strong>Password (master):</strong> {PASSWORD}</li>
-<li><strong>Server:</strong> {SERVER}</li>
-</ul>
-<p style="font-size:14px;color:#475569;">For security, change your password in the MT5 terminal after first login if your broker recommends it.</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`Your MetaTrader 5 account is <strong style="color:${BRAND.success};">ready</strong>. Use the credentials below in the MT5 terminal or mobile app.`)}
+${infoBox(`<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
+<tr><td style="padding:8px 0;color:${BRAND.textMuted};width:120px;vertical-align:top;">Login</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:700;color:${BRAND.accentNavy};font-size:16px;">{LOGIN}</td></tr>
+<tr><td style="padding:8px 0;color:${BRAND.textMuted};vertical-align:top;">Password</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:600;color:${BRAND.accentNavy};">{PASSWORD}</td></tr>
+<tr><td style="padding:8px 0;color:${BRAND.textMuted};vertical-align:top;">Server</td><td style="padding:8px 0;font-family:Consolas,monospace;color:${BRAND.accentNavy};">{SERVER}</td></tr>
+</table>`, BRAND.primaryBorder, BRAND.primarySoft)}
+${p(`<span style="font-size:14px;color:${BRAND.textMuted};">Security tip: change your master password after first login if your broker recommends it. Never share these details with anyone.</span>`)}`,
+      "Your MT5 credentials",
     ),
   },
   {
@@ -117,9 +241,13 @@ const DEFAULT_EMAILERS = [
     mailSubject: "Withdrawal update — {STATUS}",
     mailTemplateParameter: "{NAME}, {EMAIL}, {AMOUNT}, {TYPE}, {STATUS}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>Your <strong>withdrawal</strong> of <strong>${"{AMOUNT}"}</strong> (USD) is now <strong>{STATUS}</strong>.</p>
-<p>If status is <strong>completed</strong>, funds should reach your bank on standard timelines. If <strong>rejected</strong>, check your dashboard or contact support.</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`We're writing to update you on your ${strong("withdrawal")}.`)}
+${infoBox(`<p style="margin:0 0 12px;font-size:15px;color:${BRAND.textSubtle};">Amount</p>
+<p style="margin:0;font-size:28px;font-weight:700;color:${BRAND.accentNavy};">$${"{AMOUNT}"} <span style="font-size:14px;font-weight:500;color:${BRAND.textMuted};">USD</span></p>
+<p style="margin:16px 0 0;font-size:14px;">Status: ${statusPill("{STATUS}")}</p>`, BRAND.border, BRAND.footerBg)}
+${p("If <strong>completed</strong>, funds typically follow your bank's transfer timelines. If <strong>rejected</strong>, check your dashboard or reply with your reference details.")}`,
+      "Withdrawal notification",
     ),
   },
   {
@@ -127,9 +255,13 @@ const DEFAULT_EMAILERS = [
     mailSubject: "Deposit update — {STATUS}",
     mailTemplateParameter: "{NAME}, {EMAIL}, {AMOUNT}, {TYPE}, {STATUS}",
     mailBody: wrap(
-      `<p>Hi {NAME},</p>
-<p>Your <strong>deposit</strong> of <strong>${"{AMOUNT}"}</strong> (USD) is now <strong>{STATUS}</strong>.</p>
-<p>If <strong>completed</strong>, the amount is credited to your portal balance. If <strong>rejected</strong>, contact support with your proof of payment if needed.</p>`,
+      `${p(`Hi ${strong("{NAME}")},`)}
+${p(`We're writing to update you on your ${strong("deposit")}.`)}
+${infoBox(`<p style="margin:0 0 12px;font-size:15px;color:${BRAND.textSubtle};">Amount</p>
+<p style="margin:0;font-size:28px;font-weight:700;color:${BRAND.accentNavy};">$${"{AMOUNT}"} <span style="font-size:14px;font-weight:500;color:${BRAND.textMuted};">USD</span></p>
+<p style="margin:16px 0 0;font-size:14px;">Status: ${statusPill("{STATUS}")}</p>`, "#d1fae5", "#ecfdf5")}
+${p("If <strong>completed</strong>, your portal balance should reflect the credit. If <strong>rejected</strong>, contact support and include your payment proof if needed.")}`,
+      "Deposit notification",
     ),
   },
 ];
@@ -155,14 +287,36 @@ async function main() {
 
   let created = 0;
   let skipped = 0;
+  let updated = 0;
+  let unchanged = 0;
 
   for (const row of DEFAULT_EMAILERS) {
     const exists = await EmailerConfig.findOne({
       emailerType: row.emailerType,
     }).lean();
     if (exists) {
-      console.log(`Skip (already exists): ${row.emailerType}`);
-      skipped += 1;
+      if (syncExisting) {
+        const res = await EmailerConfig.updateOne(
+          { emailerType: row.emailerType },
+          {
+            $set: {
+              mailSubject: row.mailSubject,
+              mailBody: row.mailBody,
+              mailTemplateParameter: row.mailTemplateParameter,
+            },
+          },
+        );
+        if (res.modifiedCount > 0) {
+          console.log(`Updated: ${row.emailerType}`);
+          updated += 1;
+        } else {
+          console.log(`Unchanged (already matches file): ${row.emailerType}`);
+          unchanged += 1;
+        }
+      } else {
+        console.log(`Skip (already exists): ${row.emailerType}`);
+        skipped += 1;
+      }
       continue;
     }
     await EmailerConfig.create({
@@ -176,7 +330,10 @@ async function main() {
     created += 1;
   }
 
-  console.log(`\nDone. Created ${created}, skipped ${skipped}.`);
+  const summary = syncExisting
+    ? `Created ${created}, updated ${updated}, unchanged ${unchanged}.`
+    : `Created ${created}, skipped ${skipped} (existing rows kept; use --sync to refresh HTML).`;
+  console.log(`\nDone. ${summary}`);
   await mongoose.disconnect();
 }
 

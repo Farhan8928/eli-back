@@ -11,7 +11,8 @@
     "test": "node --test",
     "format": "prettier --write .",
     "validate": "npm run lint && npm run format",
-    "seed:emailers": "node scripts/seed-emailers.js"
+    "seed:emailers": "node scripts/seed-emailers.js",
+    "seed:emailers:sync": "node scripts/seed-emailers.js --sync"
   },
   "engines": {
     "node": ">=20"
