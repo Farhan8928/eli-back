@@ -5,9 +5,10 @@ import { asyncHandler } from "../../../common/utils/asyncHandler.js";
 import {
   authRegisterSchema,
   authLoginSchema,
-  authVerifyOtpSchema,
   authForgotPasswordSchema,
+  authPortalWelcomeSchema,
 } from "../auth.validation.js";
+import { authGuard } from "../../../common/middleware/auth.middleware.js";
 
 const authRoutes = express.Router();
 
@@ -22,14 +23,15 @@ authRoutes.post(
   asyncHandler(authController.login),
 );
 authRoutes.post(
-  "/verify-otp",
-  validateRequest(authVerifyOtpSchema),
-  asyncHandler(authController.verifyOtp),
-);
-authRoutes.post(
   "/forgot-password",
   validateRequest(authForgotPasswordSchema),
   asyncHandler(authController.forgotPassword),
+);
+authRoutes.post(
+  "/portal-welcome",
+  authGuard,
+  validateRequest(authPortalWelcomeSchema),
+  asyncHandler(authController.portalWelcome),
 );
 
 export { authRoutes };

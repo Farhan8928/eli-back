@@ -10,7 +10,7 @@ const authController = {
     const result = await authService.register(req.validated.body);
     return res.status(201).json(
       apiResponse({
-        message: "User registered successfully",
+        message: result.message,
         data: toAuthRegisterDto(result),
       }),
     );
@@ -26,21 +26,21 @@ const authController = {
     );
   },
 
-  verifyOtp: async (req, res) => {
-    const result = await authService.verifyOtp(req.validated.body);
-    return res.status(200).json(
-      apiResponse({
-        message: "Email verified successfully",
-        data: toAuthLoginDto(result),
-      }),
-    );
-  },
-
   forgotPassword: async (req, res) => {
     const result = await authService.forgotPassword(req.validated.body);
     return res.status(200).json(
       apiResponse({
         message: result.message,
+      }),
+    );
+  },
+
+  portalWelcome: async (req, res) => {
+    const result = await authService.sendPortalWelcomeIfNeeded(req.user);
+    return res.status(200).json(
+      apiResponse({
+        message: "ok",
+        data: result,
       }),
     );
   },

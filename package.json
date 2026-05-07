@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "node --test",
     "format": "prettier --write .",
-    "validate": "npm run lint && npm run format"
+    "validate": "npm run lint && npm run format",
+    "seed:emailers": "node scripts/seed-emailers.js"
   },
   "engines": {
     "node": ">=20"

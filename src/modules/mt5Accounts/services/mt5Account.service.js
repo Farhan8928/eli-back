@@ -5,8 +5,8 @@ import { Mt5Client } from "../../../integrations/mt5/mt5.client.js";
 import { AuditLog } from "../../admin/models/auditLog.model.js";
 import { Plan } from "../../admin/models/plan.model.js";
 import { SmtpConfig } from "../../admin/models/smtp.model.js";
-import { EmailerConfig } from "../../admin/models/emailer.model.js";
 import { mailService } from "../../admin/services/mail.service.js";
+import { logger } from "../../../common/utils/logger.js";
 import {
   mt5AutomationEnabled,
   mt5SupportEmail,
@@ -53,39 +53,18 @@ class Mt5AccountService {
       TYPE: String(payload.type || ""),
       LEVERAGE: String(payload.leverage ?? ""),
       GROUP: String(payload.group || ""),
+      SUPPORT_EMAIL: String(supportAddr || ""),
     };
 
-    const hasTpl = await EmailerConfig.findOne({
-      emailerType: "MT5_ACCOUNT_PENDING",
-    })
-      .select("_id")
-      .lean();
-
-    let clientOk = false;
-
-    if (hasTpl) {
-      clientOk = await mailService.sendTemplatedEmail(
-        "MT5_ACCOUNT_PENDING",
-        user.email,
-        placeholders,
-      );
-    }
-
-    if (!clientOk) {
-      const result = await mailService.sendMailDirect({
-        to: user.email,
-        subject: "Your trading account will be created shortly",
-        html: `<p>Hi ${placeholders.NAME},</p>
-<p>Thank you for your request. Your MetaTrader account will be created shortly. We will email you again with your login details as soon as it is ready.</p>
-${supportAddr ? `<p>If you need help, contact us at ${supportAddr}.</p>` : ""}
-<p>Best regards</p>`,
-      });
-      clientOk = result?.ok === true;
-    }
+    const clientOk = await mailService.sendTemplatedEmail(
+      "MT5_ACCOUNT_PENDING",
+      user.email,
+      placeholders,
+    );
 
     if (!clientOk) {
       throw new AppError(
-        "Could not send confirmation email. Your administrator must configure SMTP under Admin → SMTP Settings.",
+        "Could not send confirmation email. Add an Emailer with type MT5_ACCOUNT_PENDING (placeholders: {NAME}, {EMAIL}, {TYPE}, {LEVERAGE}, {GROUP}, {SUPPORT_EMAIL}) and configure SMTP.",
         500,
         "EMAIL_SEND_FAILED",
       );
@@ -95,16 +74,16 @@ ${supportAddr ? `<p>If you need help, contact us at ${supportAddr}.</p>` : ""}
       supportAddr &&
       supportAddr.toLowerCase() !== String(user.email).toLowerCase()
     ) {
-      await mailService.sendMailDirect({
-        to: supportAddr,
-        subject: `New MT5 account request — ${placeholders.EMAIL}`,
-        html: `<p><strong>${placeholders.NAME}</strong> (${placeholders.EMAIL}) requested a new MT5 account.</p>
-<ul>
-<li>Type: ${placeholders.TYPE}</li>
-<li>Leverage: 1:${placeholders.LEVERAGE}</li>
-<li>Group: ${placeholders.GROUP}</li>
-</ul>`,
-      });
+      const staffOk = await mailService.sendTemplatedEmail(
+        "MT5_ACCOUNT_REQUEST_STAFF",
+        supportAddr,
+        placeholders,
+      );
+      if (!staffOk) {
+        logger.warn(
+          "MT5_ACCOUNT_REQUEST_STAFF emailer missing or send failed; support was not notified. Create this type under Admin → Emailers.",
+        );
+      }
     }
   }
 

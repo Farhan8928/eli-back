@@ -23,15 +23,6 @@ const authLoginSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
-const authVerifyOtpSchema = z.object({
-  body: z.object({
-    email: emailSchema(),
-    otp: z.string().length(6),
-  }),
-  params: emptyObjectPassthroughSchema,
-  query: emptyObjectPassthroughSchema,
-});
-
 const authForgotPasswordSchema = z.object({
   body: z.object({
     email: emailSchema(),
@@ -40,9 +31,15 @@ const authForgotPasswordSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
+const authPortalWelcomeSchema = z.object({
+  body: emptyObjectPassthroughSchema,
+  params: emptyObjectPassthroughSchema,
+  query: emptyObjectPassthroughSchema,
+});
+
 export {
   authRegisterSchema,
   authLoginSchema,
-  authVerifyOtpSchema,
   authForgotPasswordSchema,
+  authPortalWelcomeSchema,
 };

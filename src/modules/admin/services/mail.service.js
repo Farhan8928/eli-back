@@ -3,6 +3,19 @@ import { SmtpConfig } from "../models/smtp.model.js";
 import { EmailerConfig } from "../models/emailer.model.js";
 import { logger } from "../../../common/utils/logger.js";
 
+/**
+ * All outbound mail content must come from Admin → Emailers (EmailerConfig collection).
+ * Bodies are HTML; use inline styles in templates for colors and branding.
+ *
+ * Types used by the app:
+ * - CLIENT_PORTAL_WELCOME — first client dashboard visit, once (NAME, EMAIL)
+ * - FORGOT_PASSWORD — auth (NAME, PASSWORD)
+ * - KYC_PENDING | KYC_APPROVED | KYC_REJECTED — admin profile update (NAME, STATUS)
+ * - MT5_ACCOUNT_PENDING — manual MT5 request to client (NAME, EMAIL, TYPE, LEVERAGE, GROUP, SUPPORT_EMAIL)
+ * - MT5_ACCOUNT_REQUEST_STAFF — same request, sent to support mailbox (same placeholders)
+ * - MT5_CREDENTIALS_DELIVERED — admin linked MT5 (NAME, EMAIL, LOGIN, PASSWORD, SERVER)
+ * - WITHDRAW_UPDATE | DEPOSIT_UPDATE — transaction approve/reject (NAME, EMAIL, AMOUNT, TYPE, STATUS). Use {STATUS} in subject/body for completed vs rejected.
+ */
 class MailService {
   async getTransporter() {
     const config = await SmtpConfig.findOne();
@@ -67,31 +80,6 @@ class MailService {
     } catch (error) {
       logger.error(`Failed to send email ${emailerType} to ${toEmail}:`, error);
       return false;
-    }
-  }
-
-  async sendMailDirect({ to, subject, html, cc, bcc }) {
-    try {
-      const config = await SmtpConfig.findOne();
-      if (!config) {
-        logger.warn("sendMailDirect: SMTP is not configured");
-        return { ok: false };
-      }
-
-      const transporter = await this.getTransporter();
-      const info = await transporter.sendMail({
-        from: config.username,
-        to,
-        subject,
-        html,
-        ...(cc ? { cc } : {}),
-        ...(bcc ? { bcc } : {}),
-      });
-      logger.info(`sendMailDirect to ${to} MessageId: ${info.messageId}`);
-      return { ok: true };
-    } catch (error) {
-      logger.error("sendMailDirect failed:", error);
-      return { ok: false };
     }
   }
 }

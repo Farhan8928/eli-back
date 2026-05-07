@@ -101,6 +101,11 @@ const userSchema = new mongoose.Schema(
     avatarUrl: String,
     idProofUrl: String,
     addressProofUrl: String,
+    /** First successful client dashboard visit triggers welcome email once */
+    portalWelcomeEmailSentAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

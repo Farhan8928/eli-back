@@ -513,39 +513,15 @@ class AdminService {
       SERVER: String(server || ""),
     };
 
-    const hasTpl = await EmailerConfig.findOne({
-      emailerType: "MT5_CREDENTIALS_DELIVERED",
-    })
-      .select("_id")
-      .lean();
-
-    let clientOk = false;
-    if (hasTpl) {
-      clientOk = await mailService.sendTemplatedEmail(
-        "MT5_CREDENTIALS_DELIVERED",
-        user.email,
-        placeholders,
-      );
-    }
-    if (!clientOk) {
-      const result = await mailService.sendMailDirect({
-        to: user.email,
-        subject: "Your MetaTrader 5 login details",
-        html: `<p>Hi ${placeholders.NAME},</p>
-<p>Your trading account is ready. Log in to MetaTrader 5 using:</p>
-<ul>
-<li><strong>Login:</strong> ${placeholders.LOGIN}</li>
-<li><strong>Password (master):</strong> ${placeholders.PASSWORD}</li>
-<li><strong>Server:</strong> ${placeholders.SERVER}</li>
-</ul>
-<p>For security, change your password in the MT5 terminal after first login if your broker recommends it.</p>`,
-      });
-      clientOk = result?.ok === true;
-    }
+    const clientOk = await mailService.sendTemplatedEmail(
+      "MT5_CREDENTIALS_DELIVERED",
+      user.email,
+      placeholders,
+    );
 
     if (!clientOk) {
       throw new AppError(
-        "Account was saved but email could not be sent. Check Admin → SMTP Settings, or send credentials manually.",
+        "Account was saved but email could not be sent. Add an Emailer with type MT5_CREDENTIALS_DELIVERED (placeholders: {NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {SERVER}) and configure SMTP.",
         500,
         "EMAIL_SEND_FAILED",
       );
@@ -583,91 +559,18 @@ class AdminService {
       STATUS: String(tx.status),
     };
 
-    let primaryType = null;
-    if (tx.type === "withdraw") {
-      if (tx.status === "completed") primaryType = "WITHDRAWAL_COMPLETED";
-      else if (tx.status === "rejected") primaryType = "WITHDRAWAL_REJECTED";
-    } else if (tx.type === "deposit") {
-      if (tx.status === "completed") primaryType = "DEPOSIT_COMPLETED";
-      else if (tx.status === "rejected") primaryType = "DEPOSIT_REJECTED";
-    }
-
-    const genericType =
+    const emailerType =
       tx.type === "deposit" ? "DEPOSIT_UPDATE" : "WITHDRAW_UPDATE";
 
-    let sent = false;
-
-    if (primaryType) {
-      const hasPrimary = await EmailerConfig.findOne({
-        emailerType: primaryType,
-      })
-        .select("_id")
-        .lean();
-      if (hasPrimary) {
-        sent = await mailService.sendTemplatedEmail(
-          primaryType,
-          user.email,
-          placeholders,
-        );
-      }
-    }
-
-    if (!sent) {
-      const hasGeneric = await EmailerConfig.findOne({
-        emailerType: genericType,
-      })
-        .select("_id")
-        .lean();
-      if (hasGeneric) {
-        sent = await mailService.sendTemplatedEmail(
-          genericType,
-          user.email,
-          placeholders,
-        );
-      }
-    }
-
-    if (!sent) {
-      const isWithdrawComplete =
-        tx.type === "withdraw" && tx.status === "completed";
-      const isWithdrawReject =
-        tx.type === "withdraw" && tx.status === "rejected";
-      let subject;
-      let html;
-      if (isWithdrawComplete) {
-        subject = "Your withdrawal has been processed";
-        html = `<p>Hi ${placeholders.NAME},</p>
-<p>Your withdrawal request for <strong>$${amt}</strong> has been <strong>completed</strong>. Funds should reach your bank account according to standard transfer times.</p>
-<p>If you have questions, reply to this email or contact support.</p>`;
-      } else if (isWithdrawReject) {
-        subject = "Withdrawal request update";
-        html = `<p>Hi ${placeholders.NAME},</p>
-<p>Your withdrawal request for <strong>$${amt}</strong> could not be approved at this time.</p>
-<p>Please check your dashboard or contact support for details.</p>`;
-      } else if (tx.type === "deposit" && tx.status === "completed") {
-        subject = "Your deposit has been confirmed";
-        html = `<p>Hi ${placeholders.NAME},</p>
-<p>Your deposit of <strong>$${amt}</strong> has been <strong>confirmed</strong> and credited.</p>`;
-      } else if (tx.type === "deposit" && tx.status === "rejected") {
-        subject = "Deposit request update";
-        html = `<p>Hi ${placeholders.NAME},</p>
-<p>Your deposit request for <strong>$${amt}</strong> was not approved. Please contact support if you need help.</p>`;
-      } else {
-        subject = `Transaction update — ${tx.type}`;
-        html = `<p>Hi ${placeholders.NAME},</p>
-<p>Your <strong>${tx.type}</strong> of <strong>$${amt}</strong> is now <strong>${tx.status}</strong>.</p>`;
-      }
-      const result = await mailService.sendMailDirect({
-        to: user.email,
-        subject,
-        html,
-      });
-      sent = result?.ok === true;
-    }
+    const sent = await mailService.sendTemplatedEmail(
+      emailerType,
+      user.email,
+      placeholders,
+    );
 
     if (!sent) {
       logger.warn(
-        `Transaction status email not sent for ${tx._id} (${user.email}). Configure SMTP and optionally Emailers.`,
+        `Transaction status email not sent for ${tx._id} (${user.email}). Create Emailer type: ${emailerType}. Placeholders: {NAME}, {EMAIL}, {AMOUNT}, {TYPE}, {STATUS}.`,
       );
     }
     return sent;

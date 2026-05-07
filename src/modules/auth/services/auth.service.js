@@ -32,28 +32,24 @@ class AuthService {
         throw new AppError("Email already in use", 409, "EMAIL_CONFLICT");
       }
 
-      // If user exists but not verified, update and resend OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      existing.otp = otp;
-      existing.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      existing.name = payload.name; // Allow updating name
-      existing.password = await bcrypt.hash(payload.password, 12); // Allow updating password
+      existing.name = payload.name;
+      existing.password = await bcrypt.hash(payload.password, 12);
+      existing.isEmailVerified = true;
+      existing.otp = null;
+      existing.otpExpiresAt = null;
       await existing.save();
 
-      await mailService.sendTemplatedEmail("WELCOME_EMAIL", existing.email, {
-        NAME: existing.name,
-        EMAIL: existing.email,
-        OTP: otp,
+      await AuditLog.create({
+        userType: "system",
+        log: `Incomplete registration completed: ${existing.email}`,
+        metadata: { userId: existing._id },
       });
 
       return {
-        message: "Account exists but not verified. A new OTP has been sent.",
+        message: "Account ready. Please sign in.",
         email: existing.email,
       };
     }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const hash = await bcrypt.hash(payload.password, 12);
     const user = await this.userRepository.create({
@@ -62,8 +58,9 @@ class AuthService {
       password: hash,
       role: "client",
       kycStatus: "pending",
-      otp,
-      otpExpiresAt,
+      isEmailVerified: true,
+      otp: null,
+      otpExpiresAt: null,
     });
 
     await AuditLog.create({
@@ -72,52 +69,9 @@ class AuthService {
       metadata: { userId: user._id },
     });
 
-    // Send OTP Email
-    await mailService.sendTemplatedEmail("WELCOME_EMAIL", user.email, {
-      NAME: user.name,
-      EMAIL: user.email,
-      OTP: otp, // Add OTP to template data
-    });
-
     return {
-      message: "Signup successful. Please verify your email with the OTP sent.",
+      message: "Account created. Please sign in.",
       email: user.email,
-    };
-  }
-
-  async verifyOtp(payload) {
-    const user = await this.userRepository.findByEmail(payload.email);
-    if (!user) {
-      throw new AppError("User not found", 404, "USER_NOT_FOUND");
-    }
-
-    if (user.otp !== payload.otp || user.otpExpiresAt < new Date()) {
-      throw new AppError("Invalid or expired OTP", 400, "INVALID_OTP");
-    }
-
-    user.isEmailVerified = true;
-    user.otp = null;
-    user.otpExpiresAt = null;
-    user.status = "approved"; // Automatically approve on email verification or keep pending?
-    await user.save();
-
-    await AuditLog.create({
-      userType: "system",
-      log: `User email verified: ${user.email}`,
-      metadata: { userId: user._id },
-    });
-
-    const token = this.signToken(user);
-
-    return {
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        kycStatus: user.kycStatus,
-      },
     };
   }
 
@@ -125,14 +79,6 @@ class AuthService {
     const user = await this.userRepository.findByEmail(payload.email);
     if (!user) {
       throw new AppError("Invalid credentials", 401, "INVALID_CREDENTIALS");
-    }
-
-    if (!user.isEmailVerified && user.role !== "superadmin") {
-      throw new AppError(
-        "Please verify your email first",
-        403,
-        "EMAIL_NOT_VERIFIED",
-      );
     }
 
     const matched = await bcrypt.compare(payload.password, user.password);
@@ -181,6 +127,33 @@ class AuthService {
     });
 
     return { message: successMsg };
+  }
+
+  /**
+   * Sends CLIENT_PORTAL_WELCOME once per client after they reach the dashboard.
+   */
+  async sendPortalWelcomeIfNeeded(userContext) {
+    const user = await this.userRepository.findById(userContext.id);
+    if (!user || user.role !== "client") {
+      return { sent: false };
+    }
+    if (user.portalWelcomeEmailSentAt) {
+      return { sent: false };
+    }
+
+    const ok = await mailService.sendTemplatedEmail(
+      "CLIENT_PORTAL_WELCOME",
+      user.email,
+      {
+        NAME: String(user.name || ""),
+        EMAIL: String(user.email || ""),
+      },
+    );
+
+    user.portalWelcomeEmailSentAt = new Date();
+    await user.save();
+
+    return { sent: ok };
   }
 
   async impersonateUser(userId) {
