@@ -1,5 +1,8 @@
 import { apiResponse } from "../../../common/utils/apiResponse.js";
+import { AppError } from "../../../common/errors/AppError.js";
 import { TransactionService } from "../services/transaction.service.js";
+import * as depositSettingsService from "../../admin/services/depositSettings.service.js";
+import * as depositQrGridfs from "../../admin/services/depositQrGridfs.service.js";
 import {
   toTransactionDto,
   toTransactionListDto,
@@ -8,6 +11,27 @@ import {
 const transactionService = new TransactionService();
 
 const transactionController = {
+  getDepositInstructions: async (req, res) => {
+    const data = await depositSettingsService.getDepositSettingsForApi();
+    return res.status(200).json(
+      apiResponse({
+        message: "ok",
+        data,
+      }),
+    );
+  },
+
+  streamDepositQrFile: async (req, res) => {
+    const id = await depositSettingsService.getQrCodeFileId();
+    if (!id) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+    const ok = await depositQrGridfs.pipeFileToResponse(id, res);
+    if (!ok) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+  },
+
   createManual: async (req, res) => {
     const result = await transactionService.createManual(
       req.user,

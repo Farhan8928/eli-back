@@ -215,6 +215,25 @@ const adminDeleteMt5Schema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
+const adminDepositSettingsBodySchema = z
+  .object({
+    beneficiaryName: z.string().trim().max(200).optional(),
+    bankName: z.string().trim().max(200).optional(),
+    accountNumber: z.string().trim().max(80).optional(),
+    ifscCode: z.string().trim().max(30).optional(),
+    qrCodeUrl: z.string().trim().max(2000).optional(),
+    qrHelpText: z.string().trim().max(500).optional(),
+  })
+  .refine((b) => Object.values(b).some((v) => v !== undefined), {
+    message: "At least one field is required",
+  });
+
+const adminPatchDepositSettingsSchema = z.object({
+  body: adminDepositSettingsBodySchema,
+  params: emptyObjectPassthroughSchema,
+  query: emptyObjectPassthroughSchema,
+});
+
 export {
   adminListClientsSchema,
   adminUpdateUserSchema,
@@ -229,4 +248,5 @@ export {
   adminCreateManualMt5Schema,
   adminPatchMt5Schema,
   adminDeleteMt5Schema,
+  adminPatchDepositSettingsSchema,
 };

@@ -18,7 +18,9 @@ import {
   adminCreateManualMt5Schema,
   adminPatchMt5Schema,
   adminDeleteMt5Schema,
+  adminPatchDepositSettingsSchema,
 } from "../admin.validation.js";
+import { uploadDepositQr } from "../../../common/middleware/depositQrUpload.middleware.js";
 
 const adminRoutes = express.Router();
 
@@ -83,6 +85,25 @@ adminRoutes.get(
   asyncHandler(adminController.dashboardCharts),
 );
 adminRoutes.get("/logs", asyncHandler(adminController.listAuditLogs));
+
+adminRoutes.get(
+  "/deposit-settings",
+  asyncHandler(adminController.getDepositSettings),
+);
+adminRoutes.patch(
+  "/deposit-settings",
+  validateRequest(adminPatchDepositSettingsSchema),
+  asyncHandler(adminController.patchDepositSettings),
+);
+adminRoutes.post(
+  "/deposit-settings/qr",
+  uploadDepositQr,
+  asyncHandler(adminController.uploadDepositQr),
+);
+adminRoutes.delete(
+  "/deposit-settings/qr",
+  asyncHandler(adminController.deleteDepositQr),
+);
 
 // Plans
 adminRoutes.post(

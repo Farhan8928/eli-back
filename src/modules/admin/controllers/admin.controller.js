@@ -447,6 +447,50 @@ const adminController = {
       }),
     );
   },
+
+  getDepositSettings: async (req, res) => {
+    const data = await adminService.getDepositSettings();
+    return res.status(200).json(apiResponse({ data }));
+  },
+
+  patchDepositSettings: async (req, res) => {
+    const data = await adminService.patchDepositSettings(
+      req.validated.body,
+      req.user,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "Deposit instructions updated",
+        data,
+      }),
+    );
+  },
+
+  uploadDepositQr: async (req, res) => {
+    if (!req.file) {
+      throw new AppError("No file uploaded", 400, "NO_FILE");
+    }
+    const data = await adminService.replaceDepositQrFromUpload(
+      req.file,
+      req.user,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "Deposit QR image saved",
+        data,
+      }),
+    );
+  },
+
+  deleteDepositQr: async (req, res) => {
+    const data = await adminService.clearDepositQr(req.user);
+    return res.status(200).json(
+      apiResponse({
+        message: "Stored QR image removed",
+        data,
+      }),
+    );
+  },
 };
 
 export { adminController };

@@ -14,6 +14,18 @@ const transactionRoutes = express.Router();
 transactionRoutes.use(authGuard);
 
 transactionRoutes.get(
+  "/deposit-instructions",
+  roleGuard("client"),
+  asyncHandler(transactionController.getDepositInstructions),
+);
+
+transactionRoutes.get(
+  "/deposit-qr/file",
+  roleGuard("client", "superadmin"),
+  asyncHandler(transactionController.streamDepositQrFile),
+);
+
+transactionRoutes.get(
   "/mine",
   roleGuard("client"),
   asyncHandler(transactionController.getMine),

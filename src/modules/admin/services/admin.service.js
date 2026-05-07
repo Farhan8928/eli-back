@@ -11,6 +11,7 @@ import bcrypt from "bcryptjs";
 import { mailService } from "./mail.service.js";
 import { logger } from "../../../common/utils/logger.js";
 import * as kycGridfsService from "../../users/services/kycGridfs.service.js";
+import * as depositSettingsService from "./depositSettings.service.js";
 
 class AdminService {
   constructor() {
@@ -670,6 +671,43 @@ class AdminService {
     });
 
     return tx;
+  }
+
+  async getDepositSettings() {
+    return depositSettingsService.getDepositSettingsForApi();
+  }
+
+  async patchDepositSettings(payload, adminUser) {
+    const data = await depositSettingsService.patchDepositSettings(payload);
+    await this.createAuditLog({
+      userType: "admin",
+      log: `Deposit bank / QR instructions updated by ${adminUser?.email || "admin"}`,
+      metadata: { updatedKeys: Object.keys(payload).filter((k) => payload[k] !== undefined) },
+    });
+    return data;
+  }
+
+  async replaceDepositQrFromUpload(file, adminUser) {
+    const data = await depositSettingsService.replaceQrCodeFile(file.buffer, {
+      filename: file.originalname || `deposit-qr-${Date.now()}.png`,
+      contentType: file.mimetype,
+    });
+    await this.createAuditLog({
+      userType: "admin",
+      log: `Deposit QR image uploaded (GridFS) by ${adminUser?.email || "admin"}`,
+      metadata: {},
+    });
+    return data;
+  }
+
+  async clearDepositQr(adminUser) {
+    const data = await depositSettingsService.clearQrCodeFile();
+    await this.createAuditLog({
+      userType: "admin",
+      log: `Deposit QR image removed by ${adminUser?.email || "admin"}`,
+      metadata: {},
+    });
+    return data;
   }
 }
 
