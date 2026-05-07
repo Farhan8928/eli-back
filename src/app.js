@@ -1,11 +1,10 @@
 import express from "express";
-import path from "path";
 import cors from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
-import { clientOrigin, nodeEnv } from "./config/env.js";
+import { clientOrigin } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { router as apiRouter } from "./routes/index.js";
 import { notFound } from "./common/middleware/notFound.middleware.js";
@@ -32,12 +31,6 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(requestContextProvider);
 app.use(pinoHttp({ logger, autoLogging: true, genReqId: (req) => req.id }));
 app.use(compression());
-app.use(
-  "/uploads",
-  express.static(path.join(process.cwd(), "uploads"), {
-    maxAge: nodeEnv === "production" ? "1d" : 0,
-  }),
-);
 app.use(
   "/api",
   rateLimit({

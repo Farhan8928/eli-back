@@ -37,3 +37,8 @@ export const mt5ServiceApiKey = process.env.MT5_SERVICE_API_KEY || "";
 export const mt5Login = process.env.MT5_LOGIN || "";
 export const mt5Password = process.env.MT5_PASSWORD || "";
 export const mt5Server = process.env.MT5_SERVER || "";
+
+/** Max KYC upload size (GridFS). Default 3 MiB to stay friendly to Atlas free tier. */
+export const kycMaxFileBytes = Number(
+  process.env.KYC_MAX_FILE_BYTES || 3 * 1024 * 1024,
+);

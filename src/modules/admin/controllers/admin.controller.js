@@ -1,6 +1,8 @@
 import { apiResponse } from "../../../common/utils/apiResponse.js";
+import { AppError } from "../../../common/errors/AppError.js";
 import { AdminService } from "../services/admin.service.js";
 import { AuthService } from "../../auth/services/auth.service.js";
+import * as kycGridfsService from "../../users/services/kycGridfs.service.js";
 import {
   toClientDto,
   toClientsListDto,
@@ -71,6 +73,44 @@ const adminController = {
         data: toDeleteUserDto(result),
       }),
     );
+  },
+
+  streamUserKycIdProof: async (req, res) => {
+    const user = await User.findById(req.validated.params.userId).select(
+      "idProofFileId role",
+    );
+    if (!user || user.role !== "client") {
+      throw new AppError("User not found", 404, "USER_NOT_FOUND");
+    }
+    if (!user.idProofFileId) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+    const ok = await kycGridfsService.pipeFileToResponse(
+      user.idProofFileId,
+      res,
+    );
+    if (!ok) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+  },
+
+  streamUserKycAddressProof: async (req, res) => {
+    const user = await User.findById(req.validated.params.userId).select(
+      "addressProofFileId role",
+    );
+    if (!user || user.role !== "client") {
+      throw new AppError("User not found", 404, "USER_NOT_FOUND");
+    }
+    if (!user.addressProofFileId) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+    const ok = await kycGridfsService.pipeFileToResponse(
+      user.addressProofFileId,
+      res,
+    );
+    if (!ok) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
   },
 
   analytics: async (req, res) => {

@@ -67,6 +67,16 @@ adminRoutes.delete(
   validateRequest(adminDeleteUserSchema),
   asyncHandler(adminController.deleteUser),
 );
+adminRoutes.get(
+  "/users/:userId/kyc/id-proof/file",
+  validateRequest(adminDeleteUserSchema),
+  asyncHandler(adminController.streamUserKycIdProof),
+);
+adminRoutes.get(
+  "/users/:userId/kyc/address-proof/file",
+  validateRequest(adminDeleteUserSchema),
+  asyncHandler(adminController.streamUserKycAddressProof),
+);
 adminRoutes.get("/analytics", asyncHandler(adminController.analytics));
 adminRoutes.get(
   "/analytics/charts",

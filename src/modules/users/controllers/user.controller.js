@@ -3,17 +3,39 @@ import { AppError } from "../../../common/errors/AppError.js";
 import { apiResponse } from "../../../common/utils/apiResponse.js";
 import { AuditLog } from "../../admin/models/auditLog.model.js";
 import bcrypt from "bcryptjs";
+import path from "path";
+import * as kycGridfsService from "../services/kycGridfs.service.js";
+import {
+  resolveClientAddressProofPath,
+  resolveClientIdProofPath,
+} from "../utils/kycPublicPaths.js";
 
 const userRepository = new UserRepository();
+
+const extForMime = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
+function sanitizeUserForClient(userDoc) {
+  const userObj = userDoc.toObject ? userDoc.toObject() : { ...userDoc };
+  delete userObj.password;
+  const idProofUrl = resolveClientIdProofPath(userObj);
+  const addressProofUrl = resolveClientAddressProofPath(userObj);
+  delete userObj.idProofFileId;
+  delete userObj.addressProofFileId;
+  userObj.idProofUrl = idProofUrl;
+  userObj.addressProofUrl = addressProofUrl;
+  return userObj;
+}
 
 const userController = {
   getMe: async (req, res) => {
     const user = await userRepository.findById(req.user.id);
     if (!user) throw new AppError("User not found", 404, "USER_NOT_FOUND");
 
-    // Convert to object and remove password if findById didn't already
-    const userObj = user.toObject();
-    delete userObj.password;
+    const userObj = sanitizeUserForClient(user);
 
     return res.status(200).json(apiResponse({ data: userObj }));
   },
@@ -39,7 +61,7 @@ const userController = {
     return res.status(200).json(
       apiResponse({
         message: "Profile updated successfully",
-        data: updated,
+        data: sanitizeUserForClient(updated),
       }),
     );
   },
@@ -59,7 +81,7 @@ const userController = {
     return res.status(200).json(
       apiResponse({
         message: "Bank details updated successfully",
-        data: updated,
+        data: sanitizeUserForClient(updated),
       }),
     );
   },
@@ -112,15 +134,37 @@ const userController = {
     if (!req.file)
       throw new AppError("No file uploaded", 400, "NO_FILE");
 
-    const idProofUrl = `/uploads/kyc/${req.file.filename}`;
+    const user = await userRepository.findById(req.user.id);
+    if (user?.idProofFileId) {
+      await kycGridfsService.deleteFile(user.idProofFileId);
+    }
+
+    const ext =
+      extForMime[req.file.mimetype] ||
+      path.extname(req.file.originalname) ||
+      ".jpg";
+    const filename = `${req.user.id}-idProof-${Date.now()}${ext}`;
+
+    const fileId = await kycGridfsService.uploadFromBuffer(req.file.buffer, {
+      filename,
+      contentType: req.file.mimetype,
+      userId: req.user.id,
+      docKind: "idProof",
+    });
+
     await userRepository.updateById(req.user.id, {
-      $set: { idProofUrl, kycStatus: "pending" },
+      $set: { idProofFileId: fileId, idProofUrl: null, kycStatus: "pending" },
     });
 
     await AuditLog.create({
       userType: "client",
       log: `Client uploaded identity KYC document`,
       metadata: { userId: req.user.id },
+    });
+
+    const idProofUrl = resolveClientIdProofPath({
+      idProofFileId: fileId,
+      idProofUrl: null,
     });
 
     return res.status(200).json(
@@ -135,9 +179,30 @@ const userController = {
     if (!req.file)
       throw new AppError("No file uploaded", 400, "NO_FILE");
 
-    const addressProofUrl = `/uploads/kyc/${req.file.filename}`;
+    const user = await userRepository.findById(req.user.id);
+    if (user?.addressProofFileId) {
+      await kycGridfsService.deleteFile(user.addressProofFileId);
+    }
+
+    const ext =
+      extForMime[req.file.mimetype] ||
+      path.extname(req.file.originalname) ||
+      ".jpg";
+    const filename = `${req.user.id}-addressProof-${Date.now()}${ext}`;
+
+    const fileId = await kycGridfsService.uploadFromBuffer(req.file.buffer, {
+      filename,
+      contentType: req.file.mimetype,
+      userId: req.user.id,
+      docKind: "addressProof",
+    });
+
     await userRepository.updateById(req.user.id, {
-      $set: { addressProofUrl, kycStatus: "pending" },
+      $set: {
+        addressProofFileId: fileId,
+        addressProofUrl: null,
+        kycStatus: "pending",
+      },
     });
 
     await AuditLog.create({
@@ -146,12 +211,45 @@ const userController = {
       metadata: { userId: req.user.id },
     });
 
+    const addressProofUrl = resolveClientAddressProofPath({
+      addressProofFileId: fileId,
+      addressProofUrl: null,
+    });
+
     return res.status(200).json(
       apiResponse({
         message: "Address proof uploaded for review",
         data: { addressProofUrl, kycStatus: "pending" },
       }),
     );
+  },
+
+  streamKycIdProofForMe: async (req, res) => {
+    const user = await userRepository.findById(req.user.id);
+    if (!user?.idProofFileId) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+    const ok = await kycGridfsService.pipeFileToResponse(
+      user.idProofFileId,
+      res,
+    );
+    if (!ok) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+  },
+
+  streamKycAddressProofForMe: async (req, res) => {
+    const user = await userRepository.findById(req.user.id);
+    if (!user?.addressProofFileId) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
+    const ok = await kycGridfsService.pipeFileToResponse(
+      user.addressProofFileId,
+      res,
+    );
+    if (!ok) {
+      throw new AppError("File not found", 404, "FILE_NOT_FOUND");
+    }
   },
 };
 

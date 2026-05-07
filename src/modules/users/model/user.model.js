@@ -99,8 +99,17 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     avatarUrl: String,
+    /** Optional external URL only (KYC files are stored in GridFS). */
     idProofUrl: String,
     addressProofUrl: String,
+    idProofFileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    addressProofFileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
     /** First successful client dashboard visit triggers welcome email once */
     portalWelcomeEmailSentAt: {
       type: Date,

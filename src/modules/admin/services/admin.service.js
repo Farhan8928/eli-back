@@ -10,6 +10,7 @@ import { AuditLog } from "../models/auditLog.model.js";
 import bcrypt from "bcryptjs";
 import { mailService } from "./mail.service.js";
 import { logger } from "../../../common/utils/logger.js";
+import * as kycGridfsService from "../../users/services/kycGridfs.service.js";
 
 class AdminService {
   constructor() {
@@ -67,14 +68,21 @@ class AdminService {
   }
 
   async deleteUser(userId) {
-    const deleted = await this.userRepository.deleteById(userId);
-    if (!deleted) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
       throw new AppError("User not found", 404, "USER_NOT_FOUND");
     }
 
+    await kycGridfsService.deleteFileIds([
+      user.idProofFileId,
+      user.addressProofFileId,
+    ]);
+
+    await this.userRepository.deleteById(userId);
+
     this.createAuditLog({
       userType: "admin",
-      log: `Admin deleted user account ${deleted.email}`,
+      log: `Admin deleted user account ${user.email}`,
       metadata: { userId },
     });
 

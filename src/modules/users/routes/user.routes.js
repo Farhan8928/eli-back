@@ -21,15 +21,26 @@ userRoutes.post(
   "/change-password",
   asyncHandler(userController.changePassword),
 );
-userRoutes.post("/kyc", asyncHandler(userController.uploadKyc));
+userRoutes.post(
+  "/kyc",
+  asyncHandler(userController.uploadKyc),
+);
+userRoutes.get(
+  "/me/kyc/id-proof/file",
+  asyncHandler(userController.streamKycIdProofForMe),
+);
+userRoutes.get(
+  "/me/kyc/address-proof/file",
+  asyncHandler(userController.streamKycAddressProofForMe),
+);
 userRoutes.post(
   "/kyc/id-proof",
-  uploadIdProof.single("file"),
+  uploadIdProof,
   asyncHandler(userController.uploadKycIdProof),
 );
 userRoutes.post(
   "/kyc/address-proof",
-  uploadAddressProof.single("file"),
+  uploadAddressProof,
   asyncHandler(userController.uploadKycAddressProof),
 );
 

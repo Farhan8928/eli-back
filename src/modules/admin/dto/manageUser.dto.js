@@ -1,3 +1,8 @@
+import {
+  resolveAdminAddressProofPath,
+  resolveAdminIdProofPath,
+} from "../../users/utils/kycPublicPaths.js";
+
 const toClientDto = (user) => ({
   id: String(user?._id || user?.id || ""),
   name: String(user?.name || ""),
@@ -5,9 +10,8 @@ const toClientDto = (user) => ({
   phone: String(user?.phone || ""),
   status: String(user?.status || "pending"),
   kycStatus: String(user?.kycStatus || "pending"),
-  idProofUrl: user?.idProofUrl != null ? String(user.idProofUrl) : null,
-  addressProofUrl:
-    user?.addressProofUrl != null ? String(user.addressProofUrl) : null,
+  idProofUrl: resolveAdminIdProofPath(user),
+  addressProofUrl: resolveAdminAddressProofPath(user),
   bankDetails: user?.bankDetails || null,
   createdAt: user?.createdAt || null,
   updatedAt: user?.updatedAt || null,
