@@ -10,14 +10,29 @@ import { toPlansListDto } from "../../admin/dto/manageUser.dto.js";
 const mt5AccountService = new Mt5AccountService();
 
 const mt5AccountController = {
+  getProvisioningInfo: async (req, res) => {
+    const result = await mt5AccountService.getProvisioningInfo();
+    return res.status(200).json(
+      apiResponse({
+        message: "MT5 provisioning options",
+        data: result,
+      }),
+    );
+  },
+
   createMine: async (req, res) => {
     const result = await mt5AccountService.createByClient(
       req.user,
       req.validated.body,
     );
-    return res.status(201).json(
+    const pending = Boolean(result.pending);
+    const statusCode = pending ? 202 : 201;
+    const message = pending
+      ? "Request received. Check your email for confirmation — your account will be created shortly."
+      : "MT5 account created successfully";
+    return res.status(statusCode).json(
       apiResponse({
-        message: "MT5 account created successfully",
+        message,
         data: toCreateMt5AccountDto(result),
       }),
     );

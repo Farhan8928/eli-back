@@ -15,6 +15,9 @@ import {
   adminUpdateTransactionStatusSchema,
   adminListGenericSchema,
   adminChangeUserPasswordSchema,
+  adminCreateManualMt5Schema,
+  adminPatchMt5Schema,
+  adminDeleteMt5Schema,
 } from "../admin.validation.js";
 
 const adminRoutes = express.Router();
@@ -135,6 +138,21 @@ adminRoutes.get(
   "/mt5-accounts",
   validateRequest(adminListGenericSchema),
   asyncHandler(adminController.listMt5Accounts),
+);
+adminRoutes.post(
+  "/mt5-accounts",
+  validateRequest(adminCreateManualMt5Schema),
+  asyncHandler(adminController.createManualMt5Account),
+);
+adminRoutes.patch(
+  "/mt5-accounts/:mt5AccountId",
+  validateRequest(adminPatchMt5Schema),
+  asyncHandler(adminController.updateMt5Account),
+);
+adminRoutes.delete(
+  "/mt5-accounts/:mt5AccountId",
+  validateRequest(adminDeleteMt5Schema),
+  asyncHandler(adminController.deleteMt5Account),
 );
 
 // Transactions

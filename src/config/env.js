@@ -2,7 +2,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const requiredEnv = ["MONGO_URI", "JWT_SECRET", "MT5_SERVICE_BASE_URL"];
+/** When false, MT5 API calls are skipped; clients request accounts via email instead. */
+export const mt5AutomationEnabled =
+  process.env.MT5_AUTOMATION_ENABLED !== "false";
+
+/** Shown in API errors and the client portal when automation is off. */
+export const mt5SupportEmail = process.env.MT5_SUPPORT_EMAIL || "";
+
+const requiredEnv = ["MONGO_URI", "JWT_SECRET"];
+if (mt5AutomationEnabled) {
+  requiredEnv.push("MT5_SERVICE_BASE_URL");
+}
 
 requiredEnv.forEach((name) => {
   if (!process.env[name]) {
@@ -17,7 +27,12 @@ export const jwtSecret = process.env.JWT_SECRET;
 export const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "1d";
 export const clientOrigin =
   process.env.CLIENT_ORIGIN || "http://localhost:5173";
-export const mt5ServiceBaseUrl = process.env.MT5_SERVICE_BASE_URL;
+
+/** Dummy base URL when automation is off so axios is never used with undefined. */
+export const mt5ServiceBaseUrl = mt5AutomationEnabled
+  ? process.env.MT5_SERVICE_BASE_URL
+  : process.env.MT5_SERVICE_BASE_URL || "http://127.0.0.1:0";
+
 export const mt5ServiceApiKey = process.env.MT5_SERVICE_API_KEY || "";
 export const mt5Login = process.env.MT5_LOGIN || "";
 export const mt5Password = process.env.MT5_PASSWORD || "";

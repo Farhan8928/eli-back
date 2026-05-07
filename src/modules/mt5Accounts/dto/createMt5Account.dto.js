@@ -20,7 +20,9 @@ const toMt5AccountListDto = (items) =>
   Array.isArray(items) ? items.map(toMt5AccountDto) : [];
 
 const toCreateMt5AccountDto = (payload) => ({
-  account: toMt5AccountDto(payload?.account || {}),
+  pending: Boolean(payload?.pending),
+  account:
+    payload?.account != null ? toMt5AccountDto(payload.account) : null,
   credentialsDelivery: {
     channel: String(payload?.credentialsDelivery?.channel || "secure-inbox"),
     sentAt: payload?.credentialsDelivery?.sentAt || null,

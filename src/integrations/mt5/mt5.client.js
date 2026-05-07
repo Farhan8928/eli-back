@@ -21,11 +21,31 @@ class Mt5Client {
   }
 
   normalizeError(error) {
-    const statusCode = error.response?.status || 502;
-    const message =
+    if (error instanceof AppError) return error;
+
+    const upstreamStatus = error.response?.status;
+    let statusCode = upstreamStatus || 503;
+    let message =
       error.response?.data?.error?.message ||
-      error.message ||
-      "MT5 service failed";
+      error.response?.data?.message ||
+      null;
+
+    if (!upstreamStatus && error.code) {
+      const unreachable = ["ECONNREFUSED", "ETIMEDOUT", "ENOTFOUND", "EAI_AGAIN"];
+      if (unreachable.includes(error.code)) {
+        message =
+          "Cannot reach the MT5 integration service (connection failed). " +
+          "If you are not using an MT5 API bridge, set MT5_AUTOMATION_ENABLED=false " +
+          "on the server and MT5_SUPPORT_EMAIL for manual account requests.";
+      }
+    }
+
+    if (!message) {
+      message =
+        error.message ||
+        "MT5 integration request failed. Check MT5_SERVICE_BASE_URL or use manual provisioning.";
+    }
+
     return new AppError(
       message,
       statusCode,

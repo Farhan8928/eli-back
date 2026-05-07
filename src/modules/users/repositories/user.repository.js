@@ -57,6 +57,14 @@ class UserRepository {
       { new: true },
     ).select("-password");
   }
+
+  async removeMt5AccountRef(userId, accountId) {
+    return User.findByIdAndUpdate(
+      userId,
+      { $pull: { mt5Accounts: { accountId } } },
+      { new: true },
+    ).select("-password");
+  }
 }
 
 export { UserRepository };

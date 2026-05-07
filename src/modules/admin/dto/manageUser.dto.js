@@ -55,6 +55,9 @@ const toMt5AccountDto = (acc) => ({
   id: String(acc?._id || acc?.id || ""),
   login: Number(acc?.login || 0),
   type: String(acc?.type || "demo"),
+  server: String(acc?.server || ""),
+  leverage: Number(acc?.leverage ?? 0),
+  group: String(acc?.group || ""),
   balance: Number(acc?.balance || 0),
   equity: Number(acc?.equity || 0),
   userId: acc?.userId

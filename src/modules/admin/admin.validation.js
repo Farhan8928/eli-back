@@ -153,6 +153,68 @@ const adminChangeUserPasswordSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
+const adminCreateManualMt5Schema = z.object({
+  body: z
+    .object({
+      userId: objectIdSchema,
+      login: z.coerce.number().int().positive(),
+      type: z.enum(["demo", "live"]),
+      server: z.string().trim().min(1).max(120),
+      leverage: z.coerce.number().int().min(1).max(5000),
+      group: z.string().trim().min(1).max(64),
+      masterPassword: z.string().min(6).max(128).optional(),
+      investorPassword: z.string().max(128).optional(),
+      sendCredentialsEmail: z.boolean().optional().default(true),
+    })
+    .refine(
+      (b) => b.sendCredentialsEmail !== true || Boolean(b.masterPassword?.length),
+      {
+        message: "Master password is required when sending credentials by email",
+        path: ["masterPassword"],
+      },
+    ),
+  params: emptyObjectPassthroughSchema,
+  query: emptyObjectPassthroughSchema,
+});
+
+const adminPatchMt5BodySchema = z
+  .object({
+    server: z.string().trim().min(1).max(120).optional(),
+    leverage: z.coerce.number().int().min(1).max(5000).optional(),
+    group: z.string().trim().min(1).max(64).optional(),
+    type: z.enum(["demo", "live"]).optional(),
+    balance: z.coerce.number().min(0).optional(),
+    equity: z.coerce.number().min(0).optional(),
+    creditBalance: z.coerce.number().optional(),
+  })
+  .refine(
+    (b) =>
+      b.server != null ||
+      b.leverage != null ||
+      b.group != null ||
+      b.type != null ||
+      b.balance != null ||
+      b.equity != null ||
+      b.creditBalance != null,
+    { message: "At least one field is required" },
+  );
+
+const adminPatchMt5Schema = z.object({
+  body: adminPatchMt5BodySchema,
+  params: z.object({
+    mt5AccountId: objectIdSchema,
+  }),
+  query: emptyObjectPassthroughSchema,
+});
+
+const adminDeleteMt5Schema = z.object({
+  body: emptyObjectPassthroughSchema,
+  params: z.object({
+    mt5AccountId: objectIdSchema,
+  }),
+  query: emptyObjectPassthroughSchema,
+});
+
 export {
   adminListClientsSchema,
   adminUpdateUserSchema,
@@ -164,4 +226,7 @@ export {
   adminUpdateTransactionStatusSchema,
   adminListGenericSchema,
   adminChangeUserPasswordSchema,
+  adminCreateManualMt5Schema,
+  adminPatchMt5Schema,
+  adminDeleteMt5Schema,
 };

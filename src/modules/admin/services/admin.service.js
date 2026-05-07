@@ -9,6 +9,7 @@ import { SmtpConfig } from "../models/smtp.model.js";
 import { AuditLog } from "../models/auditLog.model.js";
 import bcrypt from "bcryptjs";
 import { mailService } from "./mail.service.js";
+import { logger } from "../../../common/utils/logger.js";
 
 class AdminService {
   constructor() {
@@ -367,6 +368,190 @@ class AdminService {
     return { items, total };
   }
 
+  async createManualMt5Account(body) {
+    const {
+      userId,
+      login,
+      type,
+      server,
+      leverage,
+      group,
+      masterPassword,
+      investorPassword,
+      sendCredentialsEmail = true,
+    } = body;
+
+    const user = await User.findById(userId).select("name email role");
+    if (!user) {
+      throw new AppError("User not found", 404, "USER_NOT_FOUND");
+    }
+    if (user.role !== "client") {
+      throw new AppError(
+        "MT5 accounts can only be linked to trader (client) accounts",
+        400,
+        "INVALID_USER_ROLE",
+      );
+    }
+
+    const dup = await Mt5Account.findOne({ login });
+    if (dup) {
+      throw new AppError(
+        "This MT5 login is already registered in the CRM",
+        409,
+        "MT5_LOGIN_EXISTS",
+      );
+    }
+
+    let emailed = false;
+    if (sendCredentialsEmail === true) {
+      await this.sendMt5CredentialsEmail(user, {
+        login,
+        server: server.trim(),
+        masterPassword,
+      });
+      emailed = true;
+    }
+
+    const account = await Mt5Account.create({
+      userId,
+      login,
+      type,
+      server: server.trim(),
+      leverage: Number(leverage),
+      group: group.trim(),
+      credentials: {
+        investorPassword: investorPassword?.trim() || null,
+        sentAt: new Date(),
+      },
+    });
+
+    await this.userRepository.appendMt5Account(userId, {
+      accountId: account._id,
+      login: account.login,
+      type: account.type,
+    });
+
+    await this.createAuditLog({
+      userType: "admin",
+      log: `Admin linked MT5 login ${login} to ${user.email}`,
+      metadata: { userId, login, type, group },
+    });
+
+    const populated = await Mt5Account.findById(account._id).populate(
+      "userId",
+      "name email",
+    );
+
+    return { account: populated, emailed };
+  }
+
+  async updateMt5Account(mt5AccountId, body) {
+    const account = await Mt5Account.findById(mt5AccountId);
+    if (!account) {
+      throw new AppError("MT5 account not found", 404, "MT5_NOT_FOUND");
+    }
+
+    const { server, leverage, group, type, balance, equity, creditBalance } =
+      body;
+
+    if (creditBalance != null && Number(creditBalance) !== 0) {
+      const delta = Number(creditBalance);
+      const b = Number(account.balance || 0) + delta;
+      const e = Number(account.equity || 0) + delta;
+      account.balance = Math.max(0, b);
+      account.equity = Math.max(0, e);
+    }
+    if (balance != null) account.balance = balance;
+    if (equity != null) account.equity = equity;
+    if (server != null) account.server = server.trim();
+    if (leverage != null) account.leverage = leverage;
+    if (group != null) account.group = group.trim();
+    if (type != null) account.type = type;
+
+    await account.save();
+
+    if (type != null) {
+      await User.updateOne(
+        { _id: account.userId, "mt5Accounts.accountId": account._id },
+        { $set: { "mt5Accounts.$.type": account.type } },
+      );
+    }
+
+    await this.createAuditLog({
+      userType: "admin",
+      log: `Admin updated MT5 account login ${account.login}`,
+      metadata: { mt5AccountId, ...body },
+    });
+
+    return Mt5Account.findById(account._id).populate("userId", "name email");
+  }
+
+  async deleteMt5Account(mt5AccountId) {
+    const account = await Mt5Account.findById(mt5AccountId);
+    if (!account) {
+      throw new AppError("MT5 account not found", 404, "MT5_NOT_FOUND");
+    }
+
+    await this.userRepository.removeMt5AccountRef(account.userId, account._id);
+    await Mt5Account.findByIdAndDelete(mt5AccountId);
+
+    await this.createAuditLog({
+      userType: "admin",
+      log: `Admin deleted MT5 account login ${account.login}`,
+      metadata: { mt5AccountId, login: account.login },
+    });
+
+    return { deleted: true };
+  }
+
+  async sendMt5CredentialsEmail(user, { login, server, masterPassword }) {
+    const placeholders = {
+      NAME: String(user.name || ""),
+      EMAIL: String(user.email || ""),
+      LOGIN: String(login),
+      PASSWORD: String(masterPassword),
+      SERVER: String(server || ""),
+    };
+
+    const hasTpl = await EmailerConfig.findOne({
+      emailerType: "MT5_CREDENTIALS_DELIVERED",
+    })
+      .select("_id")
+      .lean();
+
+    let clientOk = false;
+    if (hasTpl) {
+      clientOk = await mailService.sendTemplatedEmail(
+        "MT5_CREDENTIALS_DELIVERED",
+        user.email,
+        placeholders,
+      );
+    }
+    if (!clientOk) {
+      const result = await mailService.sendMailDirect({
+        to: user.email,
+        subject: "Your MetaTrader 5 login details",
+        html: `<p>Hi ${placeholders.NAME},</p>
+<p>Your trading account is ready. Log in to MetaTrader 5 using:</p>
+<ul>
+<li><strong>Login:</strong> ${placeholders.LOGIN}</li>
+<li><strong>Password (master):</strong> ${placeholders.PASSWORD}</li>
+<li><strong>Server:</strong> ${placeholders.SERVER}</li>
+</ul>
+<p>For security, change your password in the MT5 terminal after first login if your broker recommends it.</p>`,
+      });
+      clientOk = result?.ok === true;
+    }
+
+    if (!clientOk) {
+      throw new AppError(
+        "Account was saved but email could not be sent. Check Admin → SMTP Settings, or send credentials manually.",
+        500,
+        "EMAIL_SEND_FAILED",
+      );
+    }
+  }
+
   // Fund Management
   async listTransactions(query) {
     const page = parseInt(query.page || 1, 10);
@@ -385,6 +570,159 @@ class AdminService {
     return { items, total };
   }
 
+  async sendTransactionStatusEmail(user, tx) {
+    const amt = Number(tx.amount).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const placeholders = {
+      NAME: String(user.name || ""),
+      EMAIL: String(user.email || ""),
+      AMOUNT: amt,
+      TYPE: String(tx.type),
+      STATUS: String(tx.status),
+    };
+
+    let primaryType = null;
+    if (tx.type === "withdraw") {
+      if (tx.status === "completed") primaryType = "WITHDRAWAL_COMPLETED";
+      else if (tx.status === "rejected") primaryType = "WITHDRAWAL_REJECTED";
+    } else if (tx.type === "deposit") {
+      if (tx.status === "completed") primaryType = "DEPOSIT_COMPLETED";
+      else if (tx.status === "rejected") primaryType = "DEPOSIT_REJECTED";
+    }
+
+    const genericType =
+      tx.type === "deposit" ? "DEPOSIT_UPDATE" : "WITHDRAW_UPDATE";
+
+    let sent = false;
+
+    if (primaryType) {
+      const hasPrimary = await EmailerConfig.findOne({
+        emailerType: primaryType,
+      })
+        .select("_id")
+        .lean();
+      if (hasPrimary) {
+        sent = await mailService.sendTemplatedEmail(
+          primaryType,
+          user.email,
+          placeholders,
+        );
+      }
+    }
+
+    if (!sent) {
+      const hasGeneric = await EmailerConfig.findOne({
+        emailerType: genericType,
+      })
+        .select("_id")
+        .lean();
+      if (hasGeneric) {
+        sent = await mailService.sendTemplatedEmail(
+          genericType,
+          user.email,
+          placeholders,
+        );
+      }
+    }
+
+    if (!sent) {
+      const isWithdrawComplete =
+        tx.type === "withdraw" && tx.status === "completed";
+      const isWithdrawReject =
+        tx.type === "withdraw" && tx.status === "rejected";
+      let subject;
+      let html;
+      if (isWithdrawComplete) {
+        subject = "Your withdrawal has been processed";
+        html = `<p>Hi ${placeholders.NAME},</p>
+<p>Your withdrawal request for <strong>$${amt}</strong> has been <strong>completed</strong>. Funds should reach your bank account according to standard transfer times.</p>
+<p>If you have questions, reply to this email or contact support.</p>`;
+      } else if (isWithdrawReject) {
+        subject = "Withdrawal request update";
+        html = `<p>Hi ${placeholders.NAME},</p>
+<p>Your withdrawal request for <strong>$${amt}</strong> could not be approved at this time.</p>
+<p>Please check your dashboard or contact support for details.</p>`;
+      } else if (tx.type === "deposit" && tx.status === "completed") {
+        subject = "Your deposit has been confirmed";
+        html = `<p>Hi ${placeholders.NAME},</p>
+<p>Your deposit of <strong>$${amt}</strong> has been <strong>confirmed</strong> and credited.</p>`;
+      } else if (tx.type === "deposit" && tx.status === "rejected") {
+        subject = "Deposit request update";
+        html = `<p>Hi ${placeholders.NAME},</p>
+<p>Your deposit request for <strong>$${amt}</strong> was not approved. Please contact support if you need help.</p>`;
+      } else {
+        subject = `Transaction update — ${tx.type}`;
+        html = `<p>Hi ${placeholders.NAME},</p>
+<p>Your <strong>${tx.type}</strong> of <strong>$${amt}</strong> is now <strong>${tx.status}</strong>.</p>`;
+      }
+      const result = await mailService.sendMailDirect({
+        to: user.email,
+        subject,
+        html,
+      });
+      sent = result?.ok === true;
+    }
+
+    if (!sent) {
+      logger.warn(
+        `Transaction status email not sent for ${tx._id} (${user.email}). Configure SMTP and optionally Emailers.`,
+      );
+    }
+    return sent;
+  }
+
+  roundMoney(n) {
+    return Math.round(Number(n) * 100) / 100;
+  }
+
+  /**
+   * Spreads a completed withdrawal across the client's MT5 CRM records (oldest account first).
+   */
+  async deductWithdrawalFromMt5Accounts(userId, amount) {
+    const withdrawAmt = this.roundMoney(amount);
+    if (withdrawAmt <= 0) return;
+
+    const accounts = await Mt5Account.find({ userId }).sort({ createdAt: 1 });
+
+    const totalAvailable = accounts.reduce(
+      (s, a) => s + this.roundMoney(a.balance || 0),
+      0,
+    );
+
+    if (totalAvailable + 1e-6 < withdrawAmt) {
+      throw new AppError(
+        `Client CRM balance ($${totalAvailable.toFixed(2)}) is less than the withdrawal ($${withdrawAmt.toFixed(2)}). Adjust MT5 account balances in admin or reject the request.`,
+        400,
+        "INSUFFICIENT_CRM_BALANCE",
+      );
+    }
+
+    let remaining = withdrawAmt;
+    for (const acc of accounts) {
+      if (remaining <= 0.001) break;
+      const bal = this.roundMoney(acc.balance || 0);
+      const eq = this.roundMoney(acc.equity || 0);
+      const take = this.roundMoney(Math.min(bal, remaining));
+      if (take <= 0) continue;
+
+      acc.balance = this.roundMoney(bal - take);
+      acc.equity = this.roundMoney(Math.max(0, eq - take));
+      await acc.save();
+
+      remaining = this.roundMoney(remaining - take);
+    }
+
+    if (remaining > 0.01) {
+      throw new AppError(
+        "Could not allocate withdrawal across CRM accounts. Please check balances.",
+        500,
+        "WITHDRAWAL_DEDUCTION_FAILED",
+      );
+    }
+  }
+
   async updateTransactionStatus(transactionId, status) {
     const tx = await Transaction.findById(transactionId);
     if (!tx) {
@@ -399,28 +737,25 @@ class AdminService {
       );
     }
 
+    if (status === "completed" && tx.type === "withdraw") {
+      await this.deductWithdrawalFromMt5Accounts(tx.userId, tx.amount);
+    }
+
     tx.status = status;
     await tx.save();
 
-    // Send notification email
     const user = await User.findById(tx.userId);
     if (user) {
-      const templateType =
-        tx.type === "deposit" ? "DEPOSIT_UPDATE" : "WITHDRAW_UPDATE";
-      mailService.sendTemplatedEmail(templateType, user.email, {
-        NAME: user.name,
-        TYPE: tx.type,
-        AMOUNT: tx.amount,
-        STATUS: tx.status,
-      });
+      await this.sendTransactionStatusEmail(user, tx);
     }
 
-    // If there is logic required for MT5 balance update, it should go here or be handled by an event
-
-    this.createAuditLog({
+    await this.createAuditLog({
       userType: "admin",
-      log: `Admin ${status} ${tx.type} transaction for ${user?.email || "Unknown User"}`,
-      metadata: { transactionId, status },
+      log:
+        status === "completed" && tx.type === "withdraw"
+          ? `Admin completed withdraw $${Number(tx.amount).toFixed(2)} for ${user?.email || "Unknown User"} (CRM balances updated)`
+          : `Admin ${status} ${tx.type} transaction for ${user?.email || "Unknown User"}`,
+      metadata: { transactionId, status, amount: tx.amount, type: tx.type },
     });
 
     return tx;

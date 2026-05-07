@@ -14,6 +14,12 @@ const mt5AccountRoutes = express.Router();
 mt5AccountRoutes.use(authGuard);
 
 mt5AccountRoutes.get(
+  "/provisioning",
+  roleGuard("client"),
+  asyncHandler(mt5AccountController.getProvisioningInfo),
+);
+
+mt5AccountRoutes.get(
   "/mine",
   roleGuard("client"),
   asyncHandler(mt5AccountController.getMine),

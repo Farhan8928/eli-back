@@ -10,6 +10,7 @@ import {
   toEmailersListDto,
   toRepresentativesListDto,
   toMt5AccountsListDto,
+  toMt5AccountDto,
   toTransactionDto,
   toTransactionsListDto,
   toDeleteUserDto,
@@ -273,6 +274,43 @@ const adminController = {
     );
   },
 
+  createManualMt5Account: async (req, res) => {
+    const { account, emailed } = await adminService.createManualMt5Account(
+      req.validated.body,
+    );
+    return res.status(201).json(
+      apiResponse({
+        message: emailed
+          ? "MT5 account saved and login details were emailed to the client."
+          : "MT5 account linked to the client. Send login details manually if needed.",
+        data: toMt5AccountDto(account),
+      }),
+    );
+  },
+
+  updateMt5Account: async (req, res) => {
+    const account = await adminService.updateMt5Account(
+      req.validated.params.mt5AccountId,
+      req.validated.body,
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "MT5 account updated",
+        data: toMt5AccountDto(account),
+      }),
+    );
+  },
+
+  deleteMt5Account: async (req, res) => {
+    await adminService.deleteMt5Account(req.validated.params.mt5AccountId);
+    return res.status(200).json(
+      apiResponse({
+        message: "MT5 account removed from the client",
+        data: { deleted: true },
+      }),
+    );
+  },
+
   // Transactions
   listTransactions: async (req, res) => {
     const result = await adminService.listTransactions(req.validated.query);
@@ -343,7 +381,7 @@ const adminController = {
       0,
     );
     const pendingWithdrawals = transactions
-      .filter((t) => t.type === "withdrawal" && t.status === "pending")
+      .filter((t) => t.type === "withdraw" && t.status === "pending")
       .reduce((sum, t) => sum + t.amount, 0);
 
     return res.status(200).json(

@@ -35,7 +35,7 @@ class MailService {
         logger.warn(
           `Email template for type ${emailerType} not found. Skipping email.`,
         );
-        return;
+        return false;
       }
 
       const transporter = await this.getTransporter();
@@ -63,10 +63,35 @@ class MailService {
       logger.info(
         `Email sent: ${emailerType} to ${toEmail}. MessageId: ${info.messageId}`,
       );
-      return info;
+      return true;
     } catch (error) {
       logger.error(`Failed to send email ${emailerType} to ${toEmail}:`, error);
-      // We don't throw error here to prevent blocking the main process (e.g., registration)
+      return false;
+    }
+  }
+
+  async sendMailDirect({ to, subject, html, cc, bcc }) {
+    try {
+      const config = await SmtpConfig.findOne();
+      if (!config) {
+        logger.warn("sendMailDirect: SMTP is not configured");
+        return { ok: false };
+      }
+
+      const transporter = await this.getTransporter();
+      const info = await transporter.sendMail({
+        from: config.username,
+        to,
+        subject,
+        html,
+        ...(cc ? { cc } : {}),
+        ...(bcc ? { bcc } : {}),
+      });
+      logger.info(`sendMailDirect to ${to} MessageId: ${info.messageId}`);
+      return { ok: true };
+    } catch (error) {
+      logger.error("sendMailDirect failed:", error);
+      return { ok: false };
     }
   }
 }
