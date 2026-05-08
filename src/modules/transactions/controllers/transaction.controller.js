@@ -7,10 +7,38 @@ import {
   toTransactionDto,
   toTransactionListDto,
 } from "../dto/transaction.dto.js";
+import { fetchUsdInrRate } from "../services/fxRate.service.js";
 
 const transactionService = new TransactionService();
 
 const transactionController = {
+  /** Live reference USD→INR (ECB-based, cached ~1h). For client deposit info only. */
+  getUsdInrRate: async (_req, res) => {
+    try {
+      const { rate, asOfDate } = await fetchUsdInrRate();
+      return res.status(200).json(
+        apiResponse({
+          message: "ok",
+          data: {
+            rate,
+            asOfDate,
+          },
+        }),
+      );
+    } catch {
+      return res.status(200).json(
+        apiResponse({
+          message: "ok",
+          data: {
+            rate: null,
+            asOfDate: null,
+            unavailable: true,
+          },
+        }),
+      );
+    }
+  },
+
   getDepositInstructions: async (req, res) => {
     const data = await depositSettingsService.getDepositSettingsForApi();
     return res.status(200).json(

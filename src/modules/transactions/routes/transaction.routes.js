@@ -14,6 +14,12 @@ const transactionRoutes = express.Router();
 transactionRoutes.use(authGuard);
 
 transactionRoutes.get(
+  "/fx/usd-inr",
+  roleGuard("client"),
+  asyncHandler(transactionController.getUsdInrRate),
+);
+
+transactionRoutes.get(
   "/deposit-instructions",
   roleGuard("client"),
   asyncHandler(transactionController.getDepositInstructions),
