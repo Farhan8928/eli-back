@@ -78,7 +78,9 @@ const wrap = (
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04),0 0 0 1px rgba(0,0,0,0.06);">
 <tr>
 <td style="background:linear-gradient(135deg,${BRAND.accentNavy} 0%,${BRAND.pageBg} 100%);padding:40px 32px;text-align:center;border-bottom:4px solid ${BRAND.primary};">
+<a href="https://www.elitefx.in" target="_blank" rel="noopener noreferrer" style="display:block;margin:0 auto;">
 <img src="https://www.elitefx.in/elite-fx-logo.png" alt="Elite FX" style="max-width:280px;height:auto;margin:0 auto;display:block;" width="280">
+</a>
 <p style="margin:16px 0 0;font-family:${font};font-size:14px;font-weight:500;letter-spacing:0.05em;color:#94a3b8;text-transform:uppercase;">${tagline}</p>
 </td>
 </tr>
