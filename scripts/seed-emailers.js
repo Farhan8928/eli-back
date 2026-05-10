@@ -30,7 +30,9 @@ if (!mongoUri) {
 
 const syncExisting = process.argv.includes("--sync");
 if (syncExisting) {
-  console.log("Mode: --sync (will overwrite mail subject/body/parameters for seeded types)\n");
+  console.log(
+    "Mode: --sync (will overwrite mail subject/body/parameters for seeded types)\n",
+  );
 }
 
 /**
@@ -54,11 +56,13 @@ const BRAND = {
   pillBg: "#dbeafe",
 };
 
-const font =
-  "Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const font = "Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
 /** Email-safe HTML shell: tables, inline styles only (broad client support). */
-const wrap = (bodyHtml, tagline = "Elite FX Client Services") => `<!DOCTYPE html>
+const wrap = (
+  bodyHtml,
+  tagline = "Elite FX Client Services",
+) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -109,7 +113,11 @@ const p = (html) =>
 const strong = (text) =>
   `<strong style="color:${BRAND.accentNavy};font-weight:600;">${text}</strong>`;
 
-const infoBox = (html, borderColor = BRAND.primaryBorder, bg = BRAND.primarySoft) =>
+const infoBox = (
+  html,
+  borderColor = BRAND.primaryBorder,
+  bg = BRAND.primarySoft,
+) =>
   `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0;border-radius:10px;border:1px solid ${borderColor};background-color:${bg};">
 <tr><td style="padding:20px 22px;font-family:${font};font-size:15px;line-height:1.6;color:${BRAND.textSubtle};">
 ${html}
@@ -163,11 +171,15 @@ ${p("We're here to get you verified as smoothly as possible.")}`,
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`Your Elite FX client portal is ready. You're signed in as ${strong("{EMAIL}")}.`)}
-${infoBox(`${strong("What you can do:")}<br><br>
+${infoBox(
+  `${strong("What you can do:")}<br><br>
 • View balances and trading accounts<br>
 • Request deposits and withdrawals<br>
 • Manage your profile and verification<br>
-• Download platform guides`, BRAND.primaryBorder, BRAND.primarySoft)}
+• Download platform guides`,
+  BRAND.primaryBorder,
+  BRAND.primarySoft,
+)}
 ${p("If you did not create this account, please contact us immediately.")}`,
       "Welcome aboard",
     ),
@@ -179,8 +191,12 @@ ${p("If you did not create this account, please contact us immediately.")}`,
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`We received a request to reset your client portal password. A ${strong("temporary password")} has been generated. Sign in with it once, then change your password from your profile.`)}
-${infoBox(`<p style="margin:0 0 10px;font-size:14px;color:${BRAND.textSubtle};">Temporary password</p>
-<p style="margin:0;font-family:Consolas,monospace;font-size:20px;font-weight:700;letter-spacing:0.04em;color:${BRAND.accentNavy};word-break:break-all;">{PASSWORD}</p>`, BRAND.primaryBorder, BRAND.primarySoft)}
+${infoBox(
+  `<p style="margin:0 0 10px;font-size:14px;color:${BRAND.textSubtle};">Temporary password</p>
+<p style="margin:0;font-family:Consolas,monospace;font-size:20px;font-weight:700;letter-spacing:0.04em;color:${BRAND.accentNavy};word-break:break-all;">{PASSWORD}</p>`,
+  BRAND.primaryBorder,
+  BRAND.primarySoft,
+)}
 ${p(`<span style="font-size:14px;color:${BRAND.textMuted};">For security, do not forward this email. If you did not request a reset, contact support immediately.</span>`)}`,
       "Password reset",
     ),
@@ -193,11 +209,15 @@ ${p(`<span style="font-size:14px;color:${BRAND.textMuted};">For security, do not
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`Thank you — we've received your <strong style="color:${BRAND.accentNavy};">MetaTrader 5</strong> account request. Our team will set it up and notify you when it's ready.`)}
-${infoBox(`<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
+${infoBox(
+  `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};width:100px;">Type</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">{TYPE}</td></tr>
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};">Leverage</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">1:{LEVERAGE}</td></tr>
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};">Group</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">{GROUP}</td></tr>
-</table>`, BRAND.border, BRAND.footerBg)}
+</table>`,
+  BRAND.border,
+  BRAND.footerBg,
+)}
 ${p(`Questions? Reach us at: <span style="word-break:break-all;color:${BRAND.primary};">{SUPPORT_EMAIL}</span>`)}`,
       "MT5 request received",
     ),
@@ -209,13 +229,17 @@ ${p(`Questions? Reach us at: <span style="word-break:break-all;color:${BRAND.pri
       "{NAME}, {EMAIL}, {TYPE}, {LEVERAGE}, {GROUP}, {SUPPORT_EMAIL}",
     mailBody: wrap(
       `${p(`${strong("New manual MT5 request")} — action may be required in the CRM.`)}
-${infoBox(`<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
+${infoBox(
+  `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};width:110px;">Client</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};">{NAME}</td></tr>
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};">Email</td><td style="padding:6px 0;font-weight:600;color:${BRAND.accentNavy};word-break:break-all;">{EMAIL}</td></tr>
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};">Type</td><td style="padding:6px 0;">{TYPE}</td></tr>
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};">Leverage</td><td style="padding:6px 0;">1:{LEVERAGE}</td></tr>
 <tr><td style="padding:6px 0;color:${BRAND.textMuted};">Group</td><td style="padding:6px 0;">{GROUP}</td></tr>
-</table>`, BRAND.primaryBorder, BRAND.primarySoft)}
+</table>`,
+  BRAND.primaryBorder,
+  BRAND.primarySoft,
+)}
 ${p(`Support contact on file: <span style="word-break:break-all;color:${BRAND.primary};">{SUPPORT_EMAIL}</span>`)}`,
       "Internal — MT5 provisioning",
     ),
@@ -227,11 +251,15 @@ ${p(`Support contact on file: <span style="word-break:break-all;color:${BRAND.pr
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`Your MetaTrader 5 account is <strong style="color:${BRAND.success};">ready</strong>. Use the credentials below in the MT5 terminal or mobile app.`)}
-${infoBox(`<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
+${infoBox(
+  `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
 <tr><td style="padding:8px 0;color:${BRAND.textMuted};width:120px;vertical-align:top;">Login</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:700;color:${BRAND.accentNavy};font-size:16px;">{LOGIN}</td></tr>
 <tr><td style="padding:8px 0;color:${BRAND.textMuted};vertical-align:top;">Password</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:600;color:${BRAND.accentNavy};">{PASSWORD}</td></tr>
 <tr><td style="padding:8px 0;color:${BRAND.textMuted};vertical-align:top;">Server</td><td style="padding:8px 0;font-family:Consolas,monospace;color:${BRAND.accentNavy};">{SERVER}</td></tr>
-</table>`, BRAND.primaryBorder, BRAND.primarySoft)}
+</table>`,
+  BRAND.primaryBorder,
+  BRAND.primarySoft,
+)}
 ${p(`<span style="font-size:14px;color:${BRAND.textMuted};">Security tip: change your master password after first login if your broker recommends it. Never share these details with anyone.</span>`)}`,
       "Your MT5 credentials",
     ),
@@ -243,9 +271,13 @@ ${p(`<span style="font-size:14px;color:${BRAND.textMuted};">Security tip: change
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`We're writing to update you on your ${strong("withdrawal")}.`)}
-${infoBox(`<p style="margin:0 0 12px;font-size:15px;color:${BRAND.textSubtle};">Amount</p>
+${infoBox(
+  `<p style="margin:0 0 12px;font-size:15px;color:${BRAND.textSubtle};">Amount</p>
 <p style="margin:0;font-size:28px;font-weight:700;color:${BRAND.accentNavy};">$${"{AMOUNT}"} <span style="font-size:14px;font-weight:500;color:${BRAND.textMuted};">USD</span></p>
-<p style="margin:16px 0 0;font-size:14px;">Status: ${statusPill("{STATUS}")}</p>`, BRAND.border, BRAND.footerBg)}
+<p style="margin:16px 0 0;font-size:14px;">Status: ${statusPill("{STATUS}")}</p>`,
+  BRAND.border,
+  BRAND.footerBg,
+)}
 ${p("If <strong>completed</strong>, funds typically follow your bank's transfer timelines. If <strong>rejected</strong>, check your dashboard or reply with your reference details.")}`,
       "Withdrawal notification",
     ),
@@ -257,9 +289,13 @@ ${p("If <strong>completed</strong>, funds typically follow your bank's transfer 
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`We're writing to update you on your ${strong("deposit")}.`)}
-${infoBox(`<p style="margin:0 0 12px;font-size:15px;color:${BRAND.textSubtle};">Amount</p>
+${infoBox(
+  `<p style="margin:0 0 12px;font-size:15px;color:${BRAND.textSubtle};">Amount</p>
 <p style="margin:0;font-size:28px;font-weight:700;color:${BRAND.accentNavy};">$${"{AMOUNT}"} <span style="font-size:14px;font-weight:500;color:${BRAND.textMuted};">USD</span></p>
-<p style="margin:16px 0 0;font-size:14px;">Status: ${statusPill("{STATUS}")}</p>`, "#d1fae5", "#ecfdf5")}
+<p style="margin:16px 0 0;font-size:14px;">Status: ${statusPill("{STATUS}")}</p>`,
+  "#d1fae5",
+  "#ecfdf5",
+)}
 ${p("If <strong>completed</strong>, your portal balance should reflect the credit. If <strong>rejected</strong>, contact support and include your payment proof if needed.")}`,
       "Deposit notification",
     ),

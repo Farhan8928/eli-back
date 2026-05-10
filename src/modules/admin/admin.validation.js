@@ -167,9 +167,11 @@ const adminCreateManualMt5Schema = z.object({
       sendCredentialsEmail: z.boolean().optional().default(true),
     })
     .refine(
-      (b) => b.sendCredentialsEmail !== true || Boolean(b.masterPassword?.length),
+      (b) =>
+        b.sendCredentialsEmail !== true || Boolean(b.masterPassword?.length),
       {
-        message: "Master password is required when sending credentials by email",
+        message:
+          "Master password is required when sending credentials by email",
         path: ["masterPassword"],
       },
     ),

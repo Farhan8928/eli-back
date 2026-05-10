@@ -31,7 +31,12 @@ class Mt5Client {
       null;
 
     if (!upstreamStatus && error.code) {
-      const unreachable = ["ECONNREFUSED", "ETIMEDOUT", "ENOTFOUND", "EAI_AGAIN"];
+      const unreachable = [
+        "ECONNREFUSED",
+        "ETIMEDOUT",
+        "ENOTFOUND",
+        "EAI_AGAIN",
+      ];
       if (unreachable.includes(error.code)) {
         message =
           "Cannot reach the MT5 integration service (connection failed). " +

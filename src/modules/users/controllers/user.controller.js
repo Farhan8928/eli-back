@@ -131,8 +131,7 @@ const userController = {
   },
 
   uploadKycIdProof: async (req, res) => {
-    if (!req.file)
-      throw new AppError("No file uploaded", 400, "NO_FILE");
+    if (!req.file) throw new AppError("No file uploaded", 400, "NO_FILE");
 
     const user = await userRepository.findById(req.user.id);
     if (user?.idProofFileId) {
@@ -176,8 +175,7 @@ const userController = {
   },
 
   uploadKycAddressProof: async (req, res) => {
-    if (!req.file)
-      throw new AppError("No file uploaded", 400, "NO_FILE");
+    if (!req.file) throw new AppError("No file uploaded", 400, "NO_FILE");
 
     const user = await userRepository.findById(req.user.id);
     if (user?.addressProofFileId) {

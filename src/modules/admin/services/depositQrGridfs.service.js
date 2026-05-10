@@ -42,10 +42,7 @@ async function pipeFileToResponse(fileId, res) {
     return false;
   }
   const meta = metaList[0];
-  res.setHeader(
-    "Content-Type",
-    meta.contentType || "application/octet-stream",
-  );
+  res.setHeader("Content-Type", meta.contentType || "application/octet-stream");
   res.setHeader(
     "Content-Disposition",
     `inline; filename*=UTF-8''${encodeURIComponent(meta.filename || "qr.png")}`,

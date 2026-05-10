@@ -78,7 +78,10 @@ class MailService {
       );
       return true;
     } catch (error) {
-      logger.error(`Failed to send email ${emailerType} to ${toEmail}:`, error);
+      logger.error(
+        { message: error.message },
+        `Failed to send email ${emailerType} to ${toEmail}`,
+      );
       return false;
     }
   }

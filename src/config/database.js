@@ -19,7 +19,7 @@ const connectDatabase = async (mongoUri) => {
   });
 
   mongoose.connection.on("error", (error) => {
-    logger.error({ err: error }, "MongoDB connection error");
+    logger.error({ message: error.message }, "MongoDB connection error");
   });
 };
 

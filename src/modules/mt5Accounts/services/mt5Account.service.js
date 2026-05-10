@@ -7,10 +7,7 @@ import { Plan } from "../../admin/models/plan.model.js";
 import { SmtpConfig } from "../../admin/models/smtp.model.js";
 import { mailService } from "../../admin/services/mail.service.js";
 import { logger } from "../../../common/utils/logger.js";
-import {
-  mt5AutomationEnabled,
-  mt5SupportEmail,
-} from "../../../config/env.js";
+import { mt5AutomationEnabled, mt5SupportEmail } from "../../../config/env.js";
 
 function manualProvisioningMessage(intro, supportAddr) {
   const hint = supportAddr

@@ -11,7 +11,10 @@ function getBucket() {
   return new GridFSBucket(db, { bucketName: BUCKET });
 }
 
-async function uploadFromBuffer(buffer, { filename, contentType, userId, docKind }) {
+async function uploadFromBuffer(
+  buffer,
+  { filename, contentType, userId, docKind },
+) {
   const bucket = getBucket();
   return new Promise((resolve, reject) => {
     const uploadStream = bucket.openUploadStream(filename, {
@@ -49,10 +52,7 @@ async function pipeFileToResponse(fileId, res) {
     return false;
   }
   const meta = metaList[0];
-  res.setHeader(
-    "Content-Type",
-    meta.contentType || "application/octet-stream",
-  );
+  res.setHeader("Content-Type", meta.contentType || "application/octet-stream");
   res.setHeader(
     "Content-Disposition",
     `inline; filename*=UTF-8''${encodeURIComponent(meta.filename || "document")}`,
@@ -69,9 +69,4 @@ async function pipeFileToResponse(fileId, res) {
   return true;
 }
 
-export {
-  deleteFile,
-  deleteFileIds,
-  pipeFileToResponse,
-  uploadFromBuffer,
-};
+export { deleteFile, deleteFileIds, pipeFileToResponse, uploadFromBuffer };

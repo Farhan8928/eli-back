@@ -19,6 +19,10 @@ const logger = pino({
     return reqId ? { reqId } : {};
   },
   timestamp: pino.stdTimeFunctions.isoTime,
+  redact: {
+    paths: ["password", "token", "apiKey", "secret", "authorization"],
+    remove: true,
+  },
 });
 
 export { logger };

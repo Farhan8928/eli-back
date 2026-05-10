@@ -682,7 +682,11 @@ class AdminService {
     await this.createAuditLog({
       userType: "admin",
       log: `Deposit bank / QR instructions updated by ${adminUser?.email || "admin"}`,
-      metadata: { updatedKeys: Object.keys(payload).filter((k) => payload[k] !== undefined) },
+      metadata: {
+        updatedKeys: Object.keys(payload).filter(
+          (k) => payload[k] !== undefined,
+        ),
+      },
     });
     return data;
   }

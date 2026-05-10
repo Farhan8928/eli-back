@@ -21,8 +21,7 @@ const toMt5AccountListDto = (items) =>
 
 const toCreateMt5AccountDto = (payload) => ({
   pending: Boolean(payload?.pending),
-  account:
-    payload?.account != null ? toMt5AccountDto(payload.account) : null,
+  account: payload?.account != null ? toMt5AccountDto(payload.account) : null,
   credentialsDelivery: {
     channel: String(payload?.credentialsDelivery?.channel || "secure-inbox"),
     sentAt: payload?.credentialsDelivery?.sentAt || null,

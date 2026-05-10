@@ -21,10 +21,7 @@ userRoutes.post(
   "/change-password",
   asyncHandler(userController.changePassword),
 );
-userRoutes.post(
-  "/kyc",
-  asyncHandler(userController.uploadKyc),
-);
+userRoutes.post("/kyc", asyncHandler(userController.uploadKyc));
 userRoutes.get(
   "/me/kyc/id-proof/file",
   asyncHandler(userController.streamKycIdProofForMe),

@@ -26,7 +26,13 @@ const errorHandler = (err, req, res, _next) => {
   }
 
   if (process.env.NODE_ENV !== "production") {
-    logger.error({ err }, "Unhandled error");
+    logger.error(
+      {
+        message: err.message,
+        stack: process.env.NODE_ENV === "production" ? undefined : err.stack,
+      },
+      "Unhandled error",
+    );
   }
 
   return res.status(normalizedError.statusCode).json({

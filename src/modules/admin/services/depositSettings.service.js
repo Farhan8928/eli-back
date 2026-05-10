@@ -7,8 +7,7 @@ const DEFAULTS = {
   accountNumber: "000705051065",
   ifscCode: "ICIC0000007",
   qrCodeUrl: "",
-  qrHelpText:
-    "Scan the QR code above to pay via UPI, PhonePe, or Google Pay.",
+  qrHelpText: "Scan the QR code above to pay via UPI, PhonePe, or Google Pay.",
 };
 
 async function ensureDocument() {
@@ -70,10 +69,7 @@ async function clearQrCodeFile() {
   if (doc?.qrCodeFileId) {
     await depositQrGridfs.deleteFile(doc.qrCodeFileId);
   }
-  await DepositSettings.findOneAndUpdate(
-    {},
-    { $set: { qrCodeFileId: null } },
-  );
+  await DepositSettings.findOneAndUpdate({}, { $set: { qrCodeFileId: null } });
   return getDepositSettingsForApi();
 }
 
