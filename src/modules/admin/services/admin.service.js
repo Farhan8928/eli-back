@@ -348,12 +348,12 @@ class AdminService {
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-      User.find({ role: "representative" })
+      User.find({ role: { $ne: "client" } })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .select("-password"),
-      User.countDocuments({ role: "representative" }),
+      User.countDocuments({ role: { $ne: "client" } }),
     ]);
 
     return { items, total };
