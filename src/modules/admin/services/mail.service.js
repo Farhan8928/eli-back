@@ -13,7 +13,7 @@ import { logger } from "../../../common/utils/logger.js";
  * - KYC_PENDING | KYC_APPROVED | KYC_REJECTED — admin profile update (NAME, STATUS)
  * - MT5_ACCOUNT_PENDING — manual MT5 request to client (NAME, EMAIL, TYPE, LEVERAGE, GROUP, SUPPORT_EMAIL)
  * - MT5_ACCOUNT_REQUEST_STAFF — same request, sent to support mailbox (same placeholders)
- * - MT5_CREDENTIALS_DELIVERED — admin linked MT5 (NAME, EMAIL, LOGIN, PASSWORD, SERVER)
+ * - MT5_CREDENTIALS_DELIVERED — admin linked MT5 (NAME, EMAIL, LOGIN, PASSWORD, INVESTOR_PASSWORD, SERVER)
  * - WITHDRAW_UPDATE | DEPOSIT_UPDATE — transaction approve/reject (NAME, EMAIL, AMOUNT, TYPE, STATUS). Use {STATUS} in subject/body for completed vs rejected.
  */
 class MailService {

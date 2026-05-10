@@ -69,32 +69,33 @@ const wrap = (
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Elite FX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background-color:${BRAND.pageBg};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${BRAND.pageBg};">
+<body style="margin:0;padding:0;background-color:#f5f7fa;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f7fa;">
 <tr>
-<td align="center" style="padding:40px 16px;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.22),0 0 0 1px rgba(45,125,246,0.06);">
+<td align="center" style="padding:40px 20px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04),0 0 0 1px rgba(0,0,0,0.06);">
 <tr>
-<td style="background-color:${BRAND.accentNavy};padding:32px 32px 28px;text-align:center;border-bottom:3px solid ${BRAND.primary};">
-<p style="margin:0;font-family:${font};font-size:24px;font-weight:700;letter-spacing:0.08em;color:#ffffff;">ELITE FX</p>
-<p style="margin:10px 0 0;font-family:${font};font-size:13px;line-height:1.4;color:#94a3b8;">${tagline}</p>
+<td style="background:linear-gradient(135deg,${BRAND.accentNavy} 0%,${BRAND.pageBg} 100%);padding:40px 32px;text-align:center;border-bottom:4px solid ${BRAND.primary};">
+<img src="https://www.elitefx.in/elite-fx-logo.png" alt="Elite FX" style="max-width:280px;height:auto;margin:0 auto;display:block;" width="280">
+<p style="margin:16px 0 0;font-family:${font};font-size:14px;font-weight:500;letter-spacing:0.05em;color:#94a3b8;text-transform:uppercase;">${tagline}</p>
 </td>
 </tr>
 <tr>
-<td style="padding:36px 32px;font-family:${font};font-size:16px;line-height:1.65;color:${BRAND.text};">
+<td style="padding:40px 32px;font-family:${font};font-size:16px;line-height:1.7;color:${BRAND.text};">
 ${bodyHtml}
 </td>
 </tr>
 <tr>
-<td style="padding:28px 32px;background-color:${BRAND.footerBg};border-top:1px solid ${BRAND.border};">
+<td style="padding:32px 32px;background-color:#f8fafc;border-top:1px solid ${BRAND.border};">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
 <tr>
-<td align="center" style="font-family:${font};font-size:12px;line-height:1.6;color:${BRAND.textMuted};">
-<p style="margin:0 0 8px;"><strong style="color:${BRAND.textSubtle};">Elite FX</strong></p>
+<td align="center" style="font-family:${font};font-size:13px;line-height:1.6;color:${BRAND.textMuted};">
+<p style="margin:0 0 12px;"><strong style="color:${BRAND.accentNavy};font-size:14px;">Elite FX</strong></p>
+<p style="margin:0 0 8px;">Professional Trading Solutions Since 2013</p>
 <p style="margin:0;">You are receiving this email because you have an account with us.</p>
-<p style="margin:12px 0 0;font-size:11px;color:#94a3b8;">This is an automated message. For support, use the contact options in your client portal.</p>
+<p style="margin:16px 0 0;font-size:12px;color:#94a3b8;">This is an automated message. For support, please contact us through your client portal.</p>
 </td>
 </tr>
 </table>
@@ -118,13 +119,13 @@ const infoBox = (
   borderColor = BRAND.primaryBorder,
   bg = BRAND.primarySoft,
 ) =>
-  `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0;border-radius:10px;border:1px solid ${borderColor};background-color:${bg};">
-<tr><td style="padding:20px 22px;font-family:${font};font-size:15px;line-height:1.6;color:${BRAND.textSubtle};">
+  `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;border-radius:12px;border:1px solid ${borderColor};background-color:${bg};box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+<tr><td style="padding:24px 26px;font-family:${font};font-size:15px;line-height:1.6;color:${BRAND.textSubtle};">
 ${html}
 </td></tr></table>`;
 
 const statusPill = (text) =>
-  `<span style="display:inline-block;padding:6px 14px;font-family:${font};font-size:13px;font-weight:600;color:${BRAND.pillFg};background-color:${BRAND.pillBg};border-radius:999px;">${text}</span>`;
+  `<span style="display:inline-block;padding:8px 18px;font-family:${font};font-size:13px;font-weight:600;color:${BRAND.pillFg};background-color:${BRAND.pillBg};border-radius:999px;letter-spacing:0.02em;">${text}</span>`;
 
 /** Default HTML templates; edit later in Admin → Email Templates */
 const DEFAULT_EMAILERS = [
@@ -247,14 +248,15 @@ ${p(`Support contact on file: <span style="word-break:break-all;color:${BRAND.pr
   {
     emailerType: "MT5_CREDENTIALS_DELIVERED",
     mailSubject: "Your MetaTrader 5 login details",
-    mailTemplateParameter: "{NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {SERVER}",
+    mailTemplateParameter: "{NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {INVESTOR_PASSWORD}, {SERVER}",
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`Your MetaTrader 5 account is <strong style="color:${BRAND.success};">ready</strong>. Use the credentials below in the MT5 terminal or mobile app.`)}
 ${infoBox(
   `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:14px;">
-<tr><td style="padding:8px 0;color:${BRAND.textMuted};width:120px;vertical-align:top;">Login</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:700;color:${BRAND.accentNavy};font-size:16px;">{LOGIN}</td></tr>
+<tr><td style="padding:8px 0;color:${BRAND.textMuted};width:140px;vertical-align:top;">Login</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:700;color:${BRAND.accentNavy};font-size:16px;">{LOGIN}</td></tr>
 <tr><td style="padding:8px 0;color:${BRAND.textMuted};vertical-align:top;">Password</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:600;color:${BRAND.accentNavy};">{PASSWORD}</td></tr>
+<tr><td style="padding:8px 0;color:${BRAND.textMuted};vertical-align:top;">Investor Password</td><td style="padding:8px 0;font-family:Consolas,monospace;font-weight:600;color:${BRAND.accentNavy};">{INVESTOR_PASSWORD}</td></tr>
 <tr><td style="padding:8px 0;color:${BRAND.textMuted};vertical-align:top;">Server</td><td style="padding:8px 0;font-family:Consolas,monospace;color:${BRAND.accentNavy};">{SERVER}</td></tr>
 </table>`,
   BRAND.primaryBorder,

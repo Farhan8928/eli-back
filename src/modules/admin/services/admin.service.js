@@ -417,6 +417,7 @@ class AdminService {
         login,
         server: server.trim(),
         masterPassword,
+        investorPassword: investorPassword?.trim() || "",
       });
       emailed = true;
     }
@@ -513,12 +514,13 @@ class AdminService {
     return { deleted: true };
   }
 
-  async sendMt5CredentialsEmail(user, { login, server, masterPassword }) {
+  async sendMt5CredentialsEmail(user, { login, server, masterPassword, investorPassword }) {
     const placeholders = {
       NAME: String(user.name || ""),
       EMAIL: String(user.email || ""),
       LOGIN: String(login),
       PASSWORD: String(masterPassword),
+      INVESTOR_PASSWORD: String(investorPassword || ""),
       SERVER: String(server || ""),
     };
 
@@ -530,7 +532,7 @@ class AdminService {
 
     if (!clientOk) {
       throw new AppError(
-        "Account was saved but email could not be sent. Add an Emailer with type MT5_CREDENTIALS_DELIVERED (placeholders: {NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {SERVER}) and configure SMTP.",
+        "Account was saved but email could not be sent. Add an Emailer with type MT5_CREDENTIALS_DELIVERED (placeholders: {NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {INVESTOR_PASSWORD}, {SERVER}) and configure SMTP.",
         500,
         "EMAIL_SEND_FAILED",
       );
