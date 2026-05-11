@@ -3,7 +3,7 @@ import { AppError } from "../../../common/errors/AppError.js";
 import { apiResponse } from "../../../common/utils/apiResponse.js";
 import { AuditLog } from "../../admin/models/auditLog.model.js";
 import bcrypt from "bcryptjs";
-import path from "path";
+import sharp from "sharp";
 import * as kycGridfsService from "../services/kycGridfs.service.js";
 import {
   resolveClientAddressProofPath,
@@ -12,11 +12,16 @@ import {
 
 const userRepository = new UserRepository();
 
-const extForMime = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-};
+async function optimizeKycImage(buffer) {
+  return sharp(buffer)
+    .rotate()
+    .resize({
+      width: 1400,
+      withoutEnlargement: true,
+    })
+    .webp({ quality: 70 })
+    .toBuffer();
+}
 
 function sanitizeUserForClient(userDoc) {
   const userObj = userDoc.toObject ? userDoc.toObject() : { ...userDoc };
@@ -110,11 +115,35 @@ const userController = {
 
   uploadKyc: async (req, res) => {
     const { idProofUrl, addressProofUrl } = req.body;
+    const user = await userRepository.findById(req.user.id);
+    if (!user) throw new AppError("User not found", 404, "USER_NOT_FOUND");
+
     const kycPayload = { kycStatus: "pending" };
-    if (idProofUrl) kycPayload.idProofUrl = idProofUrl;
-    if (addressProofUrl) kycPayload.addressProofUrl = addressProofUrl;
+    const fileIdsToDelete = [];
+
+    const nextIdProofUrl =
+      typeof idProofUrl === "string" ? idProofUrl.trim() : "";
+    if (nextIdProofUrl) {
+      kycPayload.idProofUrl = nextIdProofUrl;
+      kycPayload.idProofFileId = null;
+      if (user.idProofFileId) fileIdsToDelete.push(user.idProofFileId);
+    }
+
+    const nextAddressProofUrl =
+      typeof addressProofUrl === "string" ? addressProofUrl.trim() : "";
+    if (nextAddressProofUrl) {
+      kycPayload.addressProofUrl = nextAddressProofUrl;
+      kycPayload.addressProofFileId = null;
+      if (user.addressProofFileId) {
+        fileIdsToDelete.push(user.addressProofFileId);
+      }
+    }
 
     await userRepository.updateById(req.user.id, { $set: kycPayload });
+
+    if (fileIdsToDelete.length) {
+      await kycGridfsService.deleteFileIds(fileIdsToDelete);
+    }
 
     await AuditLog.create({
       userType: "client",
@@ -134,19 +163,13 @@ const userController = {
     if (!req.file) throw new AppError("No file uploaded", 400, "NO_FILE");
 
     const user = await userRepository.findById(req.user.id);
-    if (user?.idProofFileId) {
-      await kycGridfsService.deleteFile(user.idProofFileId);
-    }
+    const previousFileId = user?.idProofFileId;
+    const optimizedBuffer = await optimizeKycImage(req.file.buffer);
+    const filename = `${req.user.id}-idProof-${Date.now()}.webp`;
 
-    const ext =
-      extForMime[req.file.mimetype] ||
-      path.extname(req.file.originalname) ||
-      ".jpg";
-    const filename = `${req.user.id}-idProof-${Date.now()}${ext}`;
-
-    const fileId = await kycGridfsService.uploadFromBuffer(req.file.buffer, {
+    const fileId = await kycGridfsService.uploadFromBuffer(optimizedBuffer, {
       filename,
-      contentType: req.file.mimetype,
+      contentType: "image/webp",
       userId: req.user.id,
       docKind: "idProof",
     });
@@ -154,6 +177,10 @@ const userController = {
     await userRepository.updateById(req.user.id, {
       $set: { idProofFileId: fileId, idProofUrl: null, kycStatus: "pending" },
     });
+
+    if (previousFileId) {
+      await kycGridfsService.deleteFile(previousFileId);
+    }
 
     await AuditLog.create({
       userType: "client",
@@ -178,19 +205,13 @@ const userController = {
     if (!req.file) throw new AppError("No file uploaded", 400, "NO_FILE");
 
     const user = await userRepository.findById(req.user.id);
-    if (user?.addressProofFileId) {
-      await kycGridfsService.deleteFile(user.addressProofFileId);
-    }
+    const previousFileId = user?.addressProofFileId;
+    const optimizedBuffer = await optimizeKycImage(req.file.buffer);
+    const filename = `${req.user.id}-addressProof-${Date.now()}.webp`;
 
-    const ext =
-      extForMime[req.file.mimetype] ||
-      path.extname(req.file.originalname) ||
-      ".jpg";
-    const filename = `${req.user.id}-addressProof-${Date.now()}${ext}`;
-
-    const fileId = await kycGridfsService.uploadFromBuffer(req.file.buffer, {
+    const fileId = await kycGridfsService.uploadFromBuffer(optimizedBuffer, {
       filename,
-      contentType: req.file.mimetype,
+      contentType: "image/webp",
       userId: req.user.id,
       docKind: "addressProof",
     });
@@ -202,6 +223,10 @@ const userController = {
         kycStatus: "pending",
       },
     });
+
+    if (previousFileId) {
+      await kycGridfsService.deleteFile(previousFileId);
+    }
 
     await AuditLog.create({
       userType: "client",
