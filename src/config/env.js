@@ -25,6 +25,13 @@ export const port = Number(process.env.PORT || 5000);
 export const mongoUri = process.env.MONGO_URI;
 export const jwtSecret = process.env.JWT_SECRET;
 export const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "1d";
+/** Lifetime of an impersonation JWT once it has been exchanged. */
+export const impersonationTokenExpiresIn =
+  process.env.IMPERSONATION_TOKEN_EXPIRES_IN || "1h";
+/** Lifetime of the one-time handoff code (seconds) before it self-destructs. */
+export const impersonationCodeTtlSeconds = Number(
+  process.env.IMPERSONATION_CODE_TTL_SECONDS || 120,
+);
 export const clientOrigin =
   process.env.CLIENT_ORIGIN || "http://localhost:5173";
 

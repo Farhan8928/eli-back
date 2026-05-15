@@ -1,26 +1,34 @@
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { jwtSecret, jwtExpiresIn } from "../../../config/env.js";
+import {
+  jwtSecret,
+  jwtExpiresIn,
+  impersonationTokenExpiresIn,
+  impersonationCodeTtlSeconds,
+} from "../../../config/env.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
 import { AppError } from "../../../common/errors/AppError.js";
 
 import { mailService } from "../../admin/services/mail.service.js";
 import { AuditLog } from "../../admin/models/auditLog.model.js";
+import { ImpersonationCode } from "../models/impersonationCode.model.js";
 
 class AuthService {
   constructor() {
     this.userRepository = new UserRepository();
   }
 
-  signToken(user) {
+  signToken(user, extraClaims = {}, options = {}) {
     return jwt.sign(
       {
         sub: user._id,
         role: user.role,
         email: user.email,
+        ...extraClaims,
       },
       jwtSecret,
-      { expiresIn: jwtExpiresIn },
+      { expiresIn: options.expiresIn || jwtExpiresIn },
     );
   }
 
@@ -156,18 +164,108 @@ class AuthService {
     return { sent: ok };
   }
 
-  async impersonateUser(userId) {
-    const user = await this.userRepository.findById(userId);
+  /**
+   * Step 1 of admin impersonation: issue a single-use handoff code that the
+   * new browser tab will exchange for a real JWT. We never put the JWT itself
+   * in the URL.
+   */
+  async issueImpersonationCode(targetUserId, adminContext, requestMeta = {}) {
+    const target = await this.userRepository.findById(targetUserId);
+    if (!target) {
+      throw new AppError("User not found", 404, "USER_NOT_FOUND");
+    }
+    if (String(target._id) === String(adminContext.id)) {
+      throw new AppError(
+        "Cannot impersonate yourself",
+        400,
+        "IMPERSONATION_SELF_FORBIDDEN",
+      );
+    }
+    if (target.role === "superadmin") {
+      throw new AppError(
+        "Cannot impersonate another administrator",
+        403,
+        "IMPERSONATION_FORBIDDEN",
+      );
+    }
+
+    const code = crypto.randomBytes(32).toString("base64url");
+    const expiresAt = new Date(Date.now() + impersonationCodeTtlSeconds * 1000);
+
+    await ImpersonationCode.create({
+      code,
+      targetUserId: target._id,
+      adminId: adminContext.id,
+      adminEmail: adminContext.email,
+      issuedFromIp: requestMeta.ip,
+      expiresAt,
+    });
+
+    return {
+      code,
+      expiresAt: expiresAt.toISOString(),
+      ttlSeconds: impersonationCodeTtlSeconds,
+    };
+  }
+
+  /**
+   * Step 2 of admin impersonation: atomically consume the handoff code and
+   * return a JWT scoped to the target user, carrying an `act` claim that
+   * records which administrator is behind the session.
+   */
+  async exchangeImpersonationCode(code, requestMeta = {}) {
+    if (!code || typeof code !== "string") {
+      throw new AppError(
+        "Invalid impersonation code",
+        400,
+        "IMPERSONATION_CODE_INVALID",
+      );
+    }
+
+    // Atomic single-use consume; even simultaneous requests can only succeed once.
+    const record = await ImpersonationCode.findOneAndDelete({ code });
+    if (!record) {
+      throw new AppError(
+        "Impersonation code is invalid or has already been used",
+        400,
+        "IMPERSONATION_CODE_INVALID",
+      );
+    }
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new AppError(
+        "Impersonation code has expired",
+        400,
+        "IMPERSONATION_CODE_EXPIRED",
+      );
+    }
+
+    const user = await this.userRepository.findById(record.targetUserId);
     if (!user) {
       throw new AppError("User not found", 404, "USER_NOT_FOUND");
     }
 
-    const token = this.signToken(user);
+    const token = this.signToken(
+      user,
+      {
+        act: {
+          sub: String(record.adminId),
+          email: record.adminEmail,
+          role: "superadmin",
+        },
+      },
+      { expiresIn: impersonationTokenExpiresIn },
+    );
 
     await AuditLog.create({
+      userId: record.adminId,
+      userEmail: record.adminEmail,
       userType: "admin",
       log: `Admin impersonated user: ${user.email}`,
-      metadata: { userId: user._id },
+      ipAddress: requestMeta.ip,
+      metadata: {
+        targetUserId: user._id,
+        targetUserEmail: user.email,
+      },
     });
 
     return {
@@ -178,6 +276,10 @@ class AuthService {
         email: user.email,
         role: user.role,
         kycStatus: user.kycStatus,
+      },
+      impersonatedBy: {
+        id: String(record.adminId),
+        email: record.adminEmail,
       },
     };
   }

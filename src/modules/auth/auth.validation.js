@@ -37,9 +37,18 @@ const authPortalWelcomeSchema = z.object({
   query: emptyObjectPassthroughSchema,
 });
 
+const authImpersonationExchangeSchema = z.object({
+  body: z.object({
+    code: z.string().min(20).max(256),
+  }),
+  params: emptyObjectPassthroughSchema,
+  query: emptyObjectPassthroughSchema,
+});
+
 export {
   authRegisterSchema,
   authLoginSchema,
   authForgotPasswordSchema,
   authPortalWelcomeSchema,
+  authImpersonationExchangeSchema,
 };

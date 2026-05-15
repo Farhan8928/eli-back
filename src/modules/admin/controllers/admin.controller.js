@@ -439,10 +439,12 @@ const adminController = {
 
   impersonateUser: async (req, res) => {
     const { userId } = req.params;
-    const result = await authService.impersonateUser(userId);
+    const result = await authService.issueImpersonationCode(userId, req.user, {
+      ip: req.ip,
+    });
     return res.status(200).json(
       apiResponse({
-        message: "Impersonation successful",
+        message: "Impersonation handoff prepared",
         data: result,
       }),
     );

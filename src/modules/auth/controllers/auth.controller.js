@@ -44,6 +44,19 @@ const authController = {
       }),
     );
   },
+
+  exchangeImpersonationCode: async (req, res) => {
+    const result = await authService.exchangeImpersonationCode(
+      req.validated.body.code,
+      { ip: req.ip },
+    );
+    return res.status(200).json(
+      apiResponse({
+        message: "Impersonation session ready",
+        data: result,
+      }),
+    );
+  },
 };
 
 export { authController };

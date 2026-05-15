@@ -7,6 +7,7 @@ import {
   authLoginSchema,
   authForgotPasswordSchema,
   authPortalWelcomeSchema,
+  authImpersonationExchangeSchema,
 } from "../auth.validation.js";
 import { authGuard } from "../../../common/middleware/auth.middleware.js";
 
@@ -32,6 +33,11 @@ authRoutes.post(
   authGuard,
   validateRequest(authPortalWelcomeSchema),
   asyncHandler(authController.portalWelcome),
+);
+authRoutes.post(
+  "/impersonate/exchange",
+  validateRequest(authImpersonationExchangeSchema),
+  asyncHandler(authController.exchangeImpersonationCode),
 );
 
 export { authRoutes };
