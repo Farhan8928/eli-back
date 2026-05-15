@@ -54,6 +54,7 @@ class AdminService {
     const hash = await bcrypt.hash(newPassword, 12);
     const updated = await this.userRepository.updateById(userId, {
       password: hash,
+      passwordChangedAt: new Date(),
     });
     if (!updated) {
       throw new AppError("User not found", 404, "USER_NOT_FOUND");
@@ -328,6 +329,7 @@ class AdminService {
       name: payload.name,
       email: payload.email,
       password: hash,
+      passwordChangedAt: new Date(),
       role: "representative",
       kycStatus: "approved",
       ...payload, // Include status if passed
@@ -514,7 +516,10 @@ class AdminService {
     return { deleted: true };
   }
 
-  async sendMt5CredentialsEmail(user, { login, server, masterPassword, investorPassword }) {
+  async sendMt5CredentialsEmail(
+    user,
+    { login, server, masterPassword, investorPassword },
+  ) {
     const placeholders = {
       NAME: String(user.name || ""),
       EMAIL: String(user.email || ""),
@@ -592,13 +597,19 @@ class AdminService {
   }
 
   /**
-   * Spreads a completed withdrawal across the client's MT5 CRM records (oldest account first).
+   * Spreads a completed withdrawal across the client's MT5 CRM records using
+   * atomic per-account `findOneAndUpdate` with a `$gte` guard, so two
+   * concurrent admin actions can never double-deduct from the same balance.
+   * Any partial deductions are rolled back if we fail to allocate the full
+   * amount, leaving the data in the same shape we found it.
    */
   async deductWithdrawalFromMt5Accounts(userId, amount) {
     const withdrawAmt = this.roundMoney(amount);
     if (withdrawAmt <= 0) return;
 
-    const accounts = await Mt5Account.find({ userId }).sort({ createdAt: 1 });
+    const accounts = await Mt5Account.find({ userId })
+      .sort({ createdAt: 1 })
+      .select("_id balance");
 
     const totalAvailable = accounts.reduce(
       (s, a) => s + this.roundMoney(a.balance || 0),
@@ -613,50 +624,106 @@ class AdminService {
       );
     }
 
+    /** Track applied deductions so we can roll them back on partial failure. */
+    const applied = [];
     let remaining = withdrawAmt;
-    for (const acc of accounts) {
-      if (remaining <= 0.001) break;
-      const bal = this.roundMoney(acc.balance || 0);
-      const eq = this.roundMoney(acc.equity || 0);
-      const take = this.roundMoney(Math.min(bal, remaining));
-      if (take <= 0) continue;
 
-      acc.balance = this.roundMoney(bal - take);
-      acc.equity = this.roundMoney(Math.max(0, eq - take));
-      await acc.save();
+    try {
+      for (const acc of accounts) {
+        if (remaining <= 0.001) break;
+        const bal = this.roundMoney(acc.balance || 0);
+        if (bal <= 0) continue;
+        const take = this.roundMoney(Math.min(bal, remaining));
+        if (take <= 0) continue;
 
-      remaining = this.roundMoney(remaining - take);
-    }
+        // Atomic claim on this account: only deducts when the balance is
+        // still at least `take`, preventing double-spend across requests.
+        const updated = await Mt5Account.findOneAndUpdate(
+          { _id: acc._id, balance: { $gte: take } },
+          {
+            $inc: { balance: -take, equity: -take },
+          },
+          { new: true },
+        );
 
-    if (remaining > 0.01) {
-      throw new AppError(
-        "Could not allocate withdrawal across CRM accounts. Please check balances.",
-        500,
-        "WITHDRAWAL_DEDUCTION_FAILED",
+        if (!updated) {
+          // Another writer beat us; skip this account and let the loop try
+          // others. The next iteration will still see `remaining` un-changed.
+          continue;
+        }
+
+        // Equity floor at 0 to keep historical view consistent.
+        if (updated.equity < 0) {
+          await Mt5Account.updateOne(
+            { _id: updated._id },
+            { $set: { equity: 0 } },
+          );
+        }
+
+        applied.push({ id: acc._id, take });
+        remaining = this.roundMoney(remaining - take);
+      }
+
+      if (remaining > 0.01) {
+        throw new AppError(
+          "Could not allocate withdrawal across CRM accounts. Please retry.",
+          409,
+          "WITHDRAWAL_DEDUCTION_RACE",
+        );
+      }
+    } catch (err) {
+      // Roll back any partial deductions so we don't leave a half-applied
+      // withdrawal in the database.
+      await Promise.all(
+        applied.map(({ id, take }) =>
+          Mt5Account.updateOne(
+            { _id: id },
+            { $inc: { balance: take, equity: take } },
+          ),
+        ),
       );
+      throw err;
     }
   }
 
   async updateTransactionStatus(transactionId, status) {
-    const tx = await Transaction.findById(transactionId);
-    if (!tx) {
-      throw new AppError("Transaction not found", 404, "TRANSACTION_NOT_FOUND");
-    }
+    // Atomically claim the transaction in one step. If another admin (or a
+    // retry from a flaky network) already moved it out of `pending`, the
+    // update returns null and we surface a clean conflict error.
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: transactionId, status: "pending" },
+      { $set: { status } },
+      { new: true },
+    );
 
-    if (tx.status !== "pending") {
+    if (!tx) {
+      const exists = await Transaction.exists({ _id: transactionId });
+      if (!exists) {
+        throw new AppError(
+          "Transaction not found",
+          404,
+          "TRANSACTION_NOT_FOUND",
+        );
+      }
       throw new AppError(
         "Transaction already processed",
-        400,
+        409,
         "TRANSACTION_ALREADY_PROCESSED",
       );
     }
 
     if (status === "completed" && tx.type === "withdraw") {
-      await this.deductWithdrawalFromMt5Accounts(tx.userId, tx.amount);
+      try {
+        await this.deductWithdrawalFromMt5Accounts(tx.userId, tx.amount);
+      } catch (err) {
+        // Roll back the status claim so the admin can retry.
+        await Transaction.updateOne(
+          { _id: tx._id },
+          { $set: { status: "pending" } },
+        );
+        throw err;
+      }
     }
-
-    tx.status = status;
-    await tx.save();
 
     const user = await User.findById(tx.userId);
     if (user) {

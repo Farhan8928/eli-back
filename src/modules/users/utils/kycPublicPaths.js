@@ -2,6 +2,7 @@
 
 const ME_ID_PROOF_FILE_PATH = "users/me/kyc/id-proof/file";
 const ME_ADDRESS_PROOF_FILE_PATH = "users/me/kyc/address-proof/file";
+const ME_AVATAR_FILE_PATH = "users/me/avatar/file";
 
 function adminIdProofFilePath(userId) {
   return `admin/users/${userId}/kyc/id-proof/file`;
@@ -47,13 +48,29 @@ function resolveAdminAddressProofPath(user) {
   return null;
 }
 
+/**
+ * Avatar path resolution. When the user uploaded a real file we return the
+ * authenticated stream path; otherwise we fall through to the legacy
+ * free-text avatarUrl (still used by older accounts that don't have a
+ * GridFS-backed avatar).
+ */
+function resolveClientAvatarPath(user) {
+  if (user?.avatarFileId) return ME_AVATAR_FILE_PATH;
+  if (user?.avatarUrl != null && String(user.avatarUrl).trim()) {
+    return String(user.avatarUrl);
+  }
+  return null;
+}
+
 export {
   ME_ADDRESS_PROOF_FILE_PATH,
+  ME_AVATAR_FILE_PATH,
   ME_ID_PROOF_FILE_PATH,
   adminAddressProofFilePath,
   adminIdProofFilePath,
   resolveAdminAddressProofPath,
   resolveAdminIdProofPath,
   resolveClientAddressProofPath,
+  resolveClientAvatarPath,
   resolveClientIdProofPath,
 };

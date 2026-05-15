@@ -82,6 +82,17 @@ const toTransactionDto = (tx) => ({
   type: String(tx?.type || "deposit"),
   amount: Number(tx?.amount || 0),
   status: String(tx?.status || "pending"),
+  method: String(tx?.method || ""),
+  note: String(tx?.note || ""),
+  mt5Login: tx?.mt5Login != null ? Number(tx.mt5Login) : null,
+  /**
+   * When a client uploaded a payment proof, expose the authenticated stream
+   * path so the admin UI can fetch and display it. The path is relative;
+   * the frontend prepends its API base URL when calling.
+   */
+  proofUrl: tx?.proofFileId
+    ? `transactions/${String(tx?._id || tx?.id || "")}/proof/file`
+    : null,
   userId: tx?.userId
     ? {
         id: String(tx.userId._id || tx.userId.id || ""),

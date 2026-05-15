@@ -4,7 +4,7 @@ import helmet from "helmet";
 import pinoHttp from "pino-http";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
-import { clientOrigin } from "./config/env.js";
+import { clientOrigins } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { router as apiRouter } from "./routes/index.js";
 import { notFound } from "./common/middleware/notFound.middleware.js";
@@ -27,7 +27,17 @@ app.use(
 );
 app.use(
   cors({
-    origin: clientOrigin,
+    /**
+     * Allow-list driven by CLIENT_ORIGIN. Server-to-server callers (curl,
+     * monitoring) send no Origin header at all and get unconditional pass.
+     * Browser callers must match one of the configured origins.
+     */
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (clientOrigins.includes(origin)) return callback(null, true);
+      logger.warn({ origin }, "CORS request blocked: origin not allow-listed");
+      return callback(new Error("Origin not allowed"));
+    },
     credentials: true,
   }),
 );

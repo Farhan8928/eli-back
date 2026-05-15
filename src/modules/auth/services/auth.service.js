@@ -6,6 +6,10 @@ import {
   jwtExpiresIn,
   impersonationTokenExpiresIn,
   impersonationCodeTtlSeconds,
+  passwordResetTokenTtlMinutes,
+  passwordResetRateWindowMinutes,
+  passwordResetRateMax,
+  clientOrigin,
 } from "../../../config/env.js";
 import { UserRepository } from "../../users/repositories/user.repository.js";
 import { AppError } from "../../../common/errors/AppError.js";
@@ -13,6 +17,11 @@ import { AppError } from "../../../common/errors/AppError.js";
 import { mailService } from "../../admin/services/mail.service.js";
 import { AuditLog } from "../../admin/models/auditLog.model.js";
 import { ImpersonationCode } from "../models/impersonationCode.model.js";
+import { PasswordResetToken } from "../models/passwordResetToken.model.js";
+
+function hashResetToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 class AuthService {
   constructor() {
@@ -25,6 +34,12 @@ class AuthService {
         sub: user._id,
         role: user.role,
         email: user.email,
+        // Token version derived from the user's last password change. The
+        // auth middleware compares this to the live value so tokens stop
+        // working the moment the password rotates.
+        pwdv: user.passwordChangedAt
+          ? Math.floor(new Date(user.passwordChangedAt).getTime() / 1000)
+          : 0,
         ...extraClaims,
       },
       jwtSecret,
@@ -42,6 +57,7 @@ class AuthService {
 
       existing.name = payload.name;
       existing.password = await bcrypt.hash(payload.password, 12);
+      existing.passwordChangedAt = new Date();
       existing.isEmailVerified = true;
       existing.otp = null;
       existing.otpExpiresAt = null;
@@ -64,6 +80,7 @@ class AuthService {
       name: payload.name,
       email: payload.email.toLowerCase(),
       password: hash,
+      passwordChangedAt: new Date(),
       role: "client",
       kycStatus: "pending",
       isEmailVerified: true,
@@ -114,27 +131,116 @@ class AuthService {
     };
   }
 
-  async forgotPassword(payload) {
-    const user = await this.userRepository.findByEmail(payload.email);
+  /**
+   * Step 1 of password reset: emails a one-time link to the user. We never
+   * mutate the user's password here — that only happens after the user
+   * clicks the link and submits a new password (see resetPassword).
+   *
+   * Behaviour notes:
+   * - Always returns the same generic success message regardless of whether
+   *   the email exists, to avoid user enumeration.
+   * - Per-account rate limit prevents an attacker from spamming a user with
+   *   reset emails.
+   * - Plaintext token only travels in the email; we store its SHA-256 hash.
+   */
+  async forgotPassword(payload, requestMeta = {}) {
     const successMsg =
-      "If an account exists with this email, a reset password has been sent.";
+      "If an account exists for this email, we've sent a password reset link.";
 
+    const user = await this.userRepository.findByEmail(payload.email);
     if (!user) {
       return { message: successMsg };
     }
 
-    const tempPassword = Math.random().toString(36).slice(-8);
-    const hash = await bcrypt.hash(tempPassword, 12);
+    // Rate-limit: count recent requests for this user. We deliberately scope
+    // by account, not IP, so an attacker rotating IPs still gets blocked.
+    const windowMs = passwordResetRateWindowMinutes * 60 * 1000;
+    const recentCount = await PasswordResetToken.countDocuments({
+      userId: user._id,
+      createdAt: { $gte: new Date(Date.now() - windowMs) },
+    });
+    if (recentCount >= passwordResetRateMax) {
+      // Still return the generic success message so the response is
+      // indistinguishable from a normal request.
+      return { message: successMsg };
+    }
 
-    user.password = hash;
-    await user.save();
+    const rawToken = crypto.randomBytes(32).toString("base64url");
+    const tokenHash = hashResetToken(rawToken);
+    const expiresAt = new Date(
+      Date.now() + passwordResetTokenTtlMinutes * 60 * 1000,
+    );
 
+    await PasswordResetToken.create({
+      tokenHash,
+      userId: user._id,
+      requestedFromIp: requestMeta.ip,
+      expiresAt,
+    });
+
+    const resetUrl = `${clientOrigin.replace(/\/+$/, "")}/reset-password?token=${rawToken}`;
     await mailService.sendTemplatedEmail("FORGOT_PASSWORD", user.email, {
       NAME: user.name,
-      PASSWORD: tempPassword,
+      RESET_URL: resetUrl,
+      EXPIRES_IN_MINUTES: String(passwordResetTokenTtlMinutes),
+    });
+
+    await AuditLog.create({
+      userId: user._id,
+      userEmail: user.email,
+      userType: user.role,
+      log: `Password reset requested for ${user.email}`,
+      ipAddress: requestMeta.ip,
+      metadata: {},
     });
 
     return { message: successMsg };
+  }
+
+  /**
+   * Step 2 of password reset: validates the one-time token and sets the new
+   * password. Single-use (`findOneAndDelete`); also bumps `passwordChangedAt`
+   * which invalidates every existing JWT for this account via the `pwdv`
+   * claim check in authGuard.
+   */
+  async resetPassword(payload, requestMeta = {}) {
+    const tokenHash = hashResetToken(payload.token);
+    const record = await PasswordResetToken.findOneAndDelete({ tokenHash });
+
+    if (!record) {
+      throw new AppError(
+        "Reset link is invalid or has already been used",
+        400,
+        "RESET_TOKEN_INVALID",
+      );
+    }
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new AppError("Reset link has expired", 400, "RESET_TOKEN_EXPIRED");
+    }
+
+    const user = await this.userRepository.findById(record.userId);
+    if (!user) {
+      throw new AppError("Account no longer exists", 404, "USER_NOT_FOUND");
+    }
+
+    user.password = await bcrypt.hash(payload.newPassword, 12);
+    user.passwordChangedAt = new Date();
+    await user.save();
+
+    // Invalidate any other reset tokens that may have been issued for this
+    // user (e.g. a duplicate request before the link was clicked).
+    await PasswordResetToken.deleteMany({ userId: user._id });
+
+    await AuditLog.create({
+      userId: user._id,
+      userEmail: user.email,
+      userType: user.role,
+      log: `Password reset completed for ${user.email}`,
+      ipAddress: requestMeta.ip,
+      metadata: {},
+    });
+
+    return { message: "Password updated. You can now sign in." };
   }
 
   /**

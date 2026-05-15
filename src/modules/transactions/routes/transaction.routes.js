@@ -3,9 +3,12 @@ import { transactionController } from "../controllers/transaction.controller.js"
 import { authGuard } from "../../../common/middleware/auth.middleware.js";
 import { roleGuard } from "../../../common/middleware/role.middleware.js";
 import { validateRequest } from "../../../middlewares/validateRequest.js";
+import { uploadDepositProof } from "../../../common/middleware/depositProofUpload.middleware.js";
 import {
   transactionCreateManualSchema,
-  transactionRequestSchema,
+  transactionDepositRequestSchema,
+  transactionWithdrawRequestSchema,
+  transactionListMineSchema,
 } from "../transaction.validation.js";
 import { asyncHandler } from "../../../common/utils/asyncHandler.js";
 
@@ -34,20 +37,40 @@ transactionRoutes.get(
 transactionRoutes.get(
   "/mine",
   roleGuard("client"),
-  asyncHandler(transactionController.getMine),
+  validateRequest(transactionListMineSchema),
+  asyncHandler(transactionController.listMine),
+);
+
+transactionRoutes.get(
+  "/mine/available-balance",
+  roleGuard("client"),
+  asyncHandler(transactionController.getMyAvailableBalance),
+);
+
+transactionRoutes.get(
+  "/mine/:transactionId/proof/file",
+  roleGuard("client"),
+  asyncHandler(transactionController.streamMyProof),
+);
+
+transactionRoutes.get(
+  "/:transactionId/proof/file",
+  roleGuard("superadmin"),
+  asyncHandler(transactionController.streamProofForAdmin),
 );
 
 transactionRoutes.post(
   "/deposit",
   roleGuard("client"),
-  validateRequest(transactionRequestSchema),
+  uploadDepositProof,
+  validateRequest(transactionDepositRequestSchema),
   asyncHandler(transactionController.requestDeposit),
 );
 
 transactionRoutes.post(
   "/withdraw",
   roleGuard("client"),
-  validateRequest(transactionRequestSchema),
+  validateRequest(transactionWithdrawRequestSchema),
   asyncHandler(transactionController.requestWithdrawal),
 );
 

@@ -189,18 +189,15 @@ ${p("If you did not create this account, please contact us immediately.")}`,
   },
   {
     emailerType: "FORGOT_PASSWORD",
-    mailSubject: "Your Elite FX password has been reset",
-    mailTemplateParameter: "{NAME}, {PASSWORD}",
+    mailSubject: "Reset your Elite FX password",
+    mailTemplateParameter: "{NAME}, {RESET_URL}, {EXPIRES_IN_MINUTES}",
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
-${p(`We received a request to reset your client portal password. A ${strong("temporary password")} has been generated. Sign in with it once, then change your password from your profile.`)}
-${infoBox(
-  `<p style="margin:0 0 10px;font-size:14px;color:${BRAND.textSubtle};">Temporary password</p>
-<p style="margin:0;font-family:Consolas,monospace;font-size:20px;font-weight:700;letter-spacing:0.04em;color:${BRAND.accentNavy};word-break:break-all;">{PASSWORD}</p>`,
-  BRAND.primaryBorder,
-  BRAND.primarySoft,
-)}
-${p(`<span style="font-size:14px;color:${BRAND.textMuted};">For security, do not forward this email. If you did not request a reset, contact support immediately.</span>`)}`,
+${p(`We received a request to reset your client portal password. Click the button below to choose a new password.`)}
+${p(`<a href="{RESET_URL}" style="display:inline-block;padding:12px 22px;background:${BRAND.primary};color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;">Reset password</a>`)}
+${p(`<span style="font-size:13px;color:${BRAND.textMuted};">This link expires in {EXPIRES_IN_MINUTES} minutes and can only be used once. If the button above doesn't work, copy and paste this URL into your browser:</span>`)}
+${p(`<span style="font-family:Consolas,monospace;font-size:13px;word-break:break-all;color:${BRAND.accentNavy};">{RESET_URL}</span>`)}
+${p(`<span style="font-size:13px;color:${BRAND.textMuted};">If you did not request a password reset you can safely ignore this email — your account is unchanged.</span>`)}`,
       "Password reset",
     ),
   },
@@ -250,7 +247,8 @@ ${p(`Support contact on file: <span style="word-break:break-all;color:${BRAND.pr
   {
     emailerType: "MT5_CREDENTIALS_DELIVERED",
     mailSubject: "Your MetaTrader 5 login details",
-    mailTemplateParameter: "{NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {INVESTOR_PASSWORD}, {SERVER}",
+    mailTemplateParameter:
+      "{NAME}, {EMAIL}, {LOGIN}, {PASSWORD}, {INVESTOR_PASSWORD}, {SERVER}",
     mailBody: wrap(
       `${p(`Hi ${strong("{NAME}")},`)}
 ${p(`Your MetaTrader 5 account is <strong style="color:${BRAND.success};">ready</strong>. Use the credentials below in the MT5 terminal or mobile app.`)}

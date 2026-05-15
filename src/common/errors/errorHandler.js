@@ -25,15 +25,25 @@ const errorHandler = (err, req, res, _next) => {
     );
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    logger.error(
-      {
+  // Log every unhandled error. We omit stack traces in production responses
+  // and from the structured log payload, but the message and code are always
+  // captured so prod incidents are debuggable.
+  const isClientError =
+    normalizedError.statusCode >= 400 && normalizedError.statusCode < 500;
+  const logFn = isClientError ? logger.warn : logger.error;
+  logFn.call(
+    logger,
+    {
+      err: {
         message: err.message,
+        code: normalizedError.code,
+        statusCode: normalizedError.statusCode,
         stack: process.env.NODE_ENV === "production" ? undefined : err.stack,
       },
-      "Unhandled error",
-    );
-  }
+      req: { method: req.method, url: req.originalUrl },
+    },
+    "Request failed",
+  );
 
   return res.status(normalizedError.statusCode).json({
     success: false,

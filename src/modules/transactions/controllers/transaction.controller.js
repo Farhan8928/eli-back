@@ -73,12 +73,30 @@ const transactionController = {
     );
   },
 
-  getMine: async (req, res) => {
-    const result = await transactionService.getMine(req.user);
+  listMine: async (req, res) => {
+    const result = await transactionService.listMine(
+      req.user,
+      req.validated.query,
+    );
     return res.status(200).json(
       apiResponse({
         message: "Transactions fetched successfully",
-        data: toTransactionListDto(result),
+        data: toTransactionListDto(result.items),
+        meta: {
+          total: result.total,
+          page: Number(req.validated.query.page),
+          limit: Number(req.validated.query.limit),
+        },
+      }),
+    );
+  },
+
+  getMyAvailableBalance: async (req, res) => {
+    const available = await transactionService.getAvailableBalance(req.user.id);
+    return res.status(200).json(
+      apiResponse({
+        message: "ok",
+        data: { available },
       }),
     );
   },
@@ -87,6 +105,7 @@ const transactionController = {
     const result = await transactionService.requestDeposit(
       req.user,
       req.validated.body,
+      req.file,
     );
     return res.status(201).json(
       apiResponse({
@@ -107,6 +126,18 @@ const transactionController = {
         data: toTransactionDto(result),
       }),
     );
+  },
+
+  streamMyProof: async (req, res) => {
+    await transactionService.streamMyProof(
+      req.user,
+      req.params.transactionId,
+      res,
+    );
+  },
+
+  streamProofForAdmin: async (req, res) => {
+    await transactionService.streamProofForAdmin(req.params.transactionId, res);
   },
 };
 

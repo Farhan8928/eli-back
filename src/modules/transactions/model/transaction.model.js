@@ -32,6 +32,24 @@ const transactionSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    /**
+     * GridFS fileId of the deposit payment proof uploaded by the client.
+     * Replaces the old free-text proofUrl which was unsigned/unauthenticated.
+     */
+    proofFileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    /**
+     * MT5 login the deposit is intended to fund. We persist the login number
+     * (not the Mt5Account _id) because admins identify accounts by login in
+     * MT5 itself, and the login is stable across CRM record changes.
+     */
+    mt5Login: {
+      type: Number,
+      default: null,
+      index: true,
+    },
     note: {
       type: String,
       default: "",

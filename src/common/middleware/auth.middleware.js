@@ -21,6 +21,22 @@ const authGuard = async (req, res, next) => {
       return next(new AppError("Unauthorized", 401, "UNAUTHORIZED"));
     }
 
+    // Reject tokens that were issued before the user's last password change.
+    // This means rotating a password (self-service, admin reset, or the
+    // forgot-password flow) immediately invalidates every other session.
+    const liveVersion = user.passwordChangedAt
+      ? Math.floor(new Date(user.passwordChangedAt).getTime() / 1000)
+      : 0;
+    if (typeof decoded.pwdv === "number" && decoded.pwdv < liveVersion) {
+      return next(
+        new AppError(
+          "Session expired, please sign in again",
+          401,
+          "TOKEN_INVALIDATED",
+        ),
+      );
+    }
+
     req.user = {
       id: String(user._id),
       email: user.email,

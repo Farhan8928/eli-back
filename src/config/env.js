@@ -32,8 +32,42 @@ export const impersonationTokenExpiresIn =
 export const impersonationCodeTtlSeconds = Number(
   process.env.IMPERSONATION_CODE_TTL_SECONDS || 120,
 );
-export const clientOrigin =
-  process.env.CLIENT_ORIGIN || "http://localhost:5173";
+
+/**
+ * Frontend origin(s) allowed by CORS. Accepts a single origin or a comma-
+ * separated list (e.g. "https://app.example.com,https://staff.example.com").
+ *
+ * In production we refuse to start if the env var is missing, because the
+ * previous default (`http://localhost:5173`) would silently reject every
+ * request from a real deployment and clients would just see infinite
+ * spinners. In development we default to the Vite port the front-end
+ * actually runs on (`8080` per `.env.example`).
+ */
+if (nodeEnv === "production" && !process.env.CLIENT_ORIGIN) {
+  throw new Error(
+    "CLIENT_ORIGIN is required in production. Set it to the frontend origin(s), e.g. https://portal.example.com",
+  );
+}
+
+const rawClientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:8080";
+export const clientOrigin = rawClientOrigin;
+export const clientOrigins = rawClientOrigin
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+/** Lifetime of a password reset link (minutes) before it self-destructs. */
+export const passwordResetTokenTtlMinutes = Number(
+  process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30,
+);
+/** Per-account/IP rate-limit window (minutes) for forgot-password requests. */
+export const passwordResetRateWindowMinutes = Number(
+  process.env.PASSWORD_RESET_RATE_WINDOW_MINUTES || 60,
+);
+/** Max forgot-password requests for the same identity in the window. */
+export const passwordResetRateMax = Number(
+  process.env.PASSWORD_RESET_RATE_MAX || 3,
+);
 
 /** Dummy base URL when automation is off so axios is never used with undefined. */
 export const mt5ServiceBaseUrl = mt5AutomationEnabled

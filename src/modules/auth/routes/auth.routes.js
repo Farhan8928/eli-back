@@ -8,6 +8,7 @@ import {
   authForgotPasswordSchema,
   authPortalWelcomeSchema,
   authImpersonationExchangeSchema,
+  authResetPasswordSchema,
 } from "../auth.validation.js";
 import { authGuard } from "../../../common/middleware/auth.middleware.js";
 
@@ -27,6 +28,11 @@ authRoutes.post(
   "/forgot-password",
   validateRequest(authForgotPasswordSchema),
   asyncHandler(authController.forgotPassword),
+);
+authRoutes.post(
+  "/reset-password",
+  validateRequest(authResetPasswordSchema),
+  asyncHandler(authController.resetPassword),
 );
 authRoutes.post(
   "/portal-welcome",

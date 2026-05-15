@@ -99,6 +99,12 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     avatarUrl: String,
+    /** When the user uploads an avatar, the GridFS file id. The DTO derives
+     *  the streaming URL from this rather than from the legacy avatarUrl. */
+    avatarFileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
     /** Optional external URL only (KYC files are stored in GridFS). */
     idProofUrl: String,
     addressProofUrl: String,
@@ -114,6 +120,16 @@ const userSchema = new mongoose.Schema(
     portalWelcomeEmailSentAt: {
       type: Date,
       default: null,
+    },
+    /**
+     * Bumped whenever the password is set/changed (login flow, self-service
+     * change, admin reset, password reset link). JWTs include this as the
+     * `pwdv` claim so existing tokens stop working as soon as the password
+     * rotates — protects against stolen tokens surviving a password change.
+     */
+    passwordChangedAt: {
+      type: Date,
+      default: () => new Date(),
     },
   },
   {

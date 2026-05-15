@@ -27,7 +27,20 @@ const authController = {
   },
 
   forgotPassword: async (req, res) => {
-    const result = await authService.forgotPassword(req.validated.body);
+    const result = await authService.forgotPassword(req.validated.body, {
+      ip: req.ip,
+    });
+    return res.status(200).json(
+      apiResponse({
+        message: result.message,
+      }),
+    );
+  },
+
+  resetPassword: async (req, res) => {
+    const result = await authService.resetPassword(req.validated.body, {
+      ip: req.ip,
+    });
     return res.status(200).json(
       apiResponse({
         message: result.message,

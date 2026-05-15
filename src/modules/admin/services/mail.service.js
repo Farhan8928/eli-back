@@ -7,15 +7,45 @@ import { logger } from "../../../common/utils/logger.js";
  * All outbound mail content must come from Admin → Emailers (EmailerConfig collection).
  * Bodies are HTML; use inline styles in templates for colors and branding.
  *
+ * All placeholder values are HTML-escaped before substitution to prevent
+ * stored-XSS via user-controlled fields (e.g. names, addresses). Placeholder
+ * keys ending in `_URL` are treated as links — only `https?:` and `mailto:`
+ * URLs are passed through, anything else collapses to an empty string.
+ *
  * Types used by the app:
  * - CLIENT_PORTAL_WELCOME — first client dashboard visit, once (NAME, EMAIL)
- * - FORGOT_PASSWORD — auth (NAME, PASSWORD)
+ * - FORGOT_PASSWORD — password reset link (NAME, RESET_URL, EXPIRES_IN_MINUTES)
  * - KYC_PENDING | KYC_APPROVED | KYC_REJECTED — admin profile update (NAME, STATUS)
  * - MT5_ACCOUNT_PENDING — manual MT5 request to client (NAME, EMAIL, TYPE, LEVERAGE, GROUP, SUPPORT_EMAIL)
  * - MT5_ACCOUNT_REQUEST_STAFF — same request, sent to support mailbox (same placeholders)
  * - MT5_CREDENTIALS_DELIVERED — admin linked MT5 (NAME, EMAIL, LOGIN, PASSWORD, INVESTOR_PASSWORD, SERVER)
- * - WITHDRAW_UPDATE | DEPOSIT_UPDATE — transaction approve/reject (NAME, EMAIL, AMOUNT, TYPE, STATUS). Use {STATUS} in subject/body for completed vs rejected.
+ * - WITHDRAW_UPDATE | DEPOSIT_UPDATE — transaction approve/reject (NAME, EMAIL, AMOUNT, TYPE, STATUS).
  */
+/**
+ * Minimal HTML escape for placeholder values that get interpolated into
+ * `mailBody` (which is HTML). Some placeholders (e.g. RESET_URL, an absolute
+ * https link) intentionally need the URL to remain intact, so we expose an
+ * opt-out via the `safeKeys` set the caller can pass in.
+ */
+function htmlEscape(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Subject lines are rendered as plain text by mail clients but some still
+ * interpret CRLF as header injection. Strip newlines defensively.
+ */
+function sanitizeSubject(value) {
+  return String(value)
+    .replace(/[\r\n]+/g, " ")
+    .trim();
+}
+
 class MailService {
   async getTransporter() {
     const config = await SmtpConfig.findOne();
@@ -36,7 +66,14 @@ class MailService {
   }
 
   /**
-   * Sends an email based on a predefined template type
+   * Sends an email based on a predefined template type.
+   *
+   * Placeholder values are HTML-escaped before substitution so a user-
+   * controlled string (e.g. their name or address) cannot inject markup or
+   * scripts into the final email. URL-shaped placeholders (anything ending
+   * in `_URL`) are passed through after a strict scheme check, since they
+   * must remain clickable.
+   *
    * @param {string} emailerType - e.g., 'WELCOME_EMAIL', 'DEPOSIT_CONFIRM'
    * @param {string} toEmail - Recipient email
    * @param {Object} placeholders - Key-value pairs for template replacement
@@ -53,15 +90,34 @@ class MailService {
 
       const transporter = await this.getTransporter();
 
-      // Replace placeholders in subject and body
+      // Replace placeholders in subject and body. Body is HTML so we escape
+      // every value; URL-shaped placeholders (key ending in _URL) pass
+      // through after a scheme check, so the link remains clickable.
       let body = template.mailBody;
       let subject = template.mailSubject;
 
       Object.keys(placeholders).forEach((key) => {
+        const raw = placeholders[key];
+        const isUrlKey = /_URL$/i.test(key);
+        let bodyValue;
+        if (isUrlKey) {
+          const str = String(raw || "");
+          const safeUrl =
+            /^https?:\/\//i.test(str) || /^mailto:/i.test(str) ? str : "";
+          // Even URLs need quote escaping in case the template uses it as
+          // an attribute value.
+          bodyValue = safeUrl.replace(/"/g, "&quot;");
+        } else {
+          bodyValue = htmlEscape(raw ?? "");
+        }
+        const subjectValue = sanitizeSubject(raw ?? "");
+
         const regex = new RegExp(`{${key}}`, "g");
-        body = body.replace(regex, placeholders[key]);
-        subject = subject.replace(regex, placeholders[key]);
+        body = body.replace(regex, bodyValue);
+        subject = subject.replace(regex, subjectValue);
       });
+
+      subject = sanitizeSubject(subject);
 
       const mailOptions = {
         from: (await SmtpConfig.findOne()).username,

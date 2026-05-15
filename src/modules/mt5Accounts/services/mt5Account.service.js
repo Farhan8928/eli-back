@@ -178,9 +178,18 @@ class Mt5AccountService {
       }));
     }
 
-    const enriched = await Promise.all(
-      accounts.map(async (account) => {
-        const remote = await this.mt5Client.getAccount(account.login);
+    // When the MT5 bridge is reachable we enrich each CRM record with live
+    // balance/equity from MT5. Use Promise.allSettled so a single failing
+    // account doesn't blank out the entire list — the client still sees
+    // their accounts with the CRM-stored values as a fallback.
+    const settled = await Promise.allSettled(
+      accounts.map((account) => this.mt5Client.getAccount(account.login)),
+    );
+
+    return accounts.map((account, idx) => {
+      const result = settled[idx];
+      if (result.status === "fulfilled") {
+        const remote = result.value?.data || {};
         return {
           login: account.login,
           type: account.type,
@@ -188,16 +197,34 @@ class Mt5AccountService {
           leverage: account.leverage,
           group: account.group,
           createdAt: account.createdAt,
-          balance: remote.data.balance,
-          equity: remote.data.equity,
-          margin: remote.data.margin,
-          openTrades: remote.data.openTrades,
-          tradeHistory: remote.data.tradeHistory,
+          balance: remote.balance,
+          equity: remote.equity,
+          margin: remote.margin,
+          openTrades: remote.openTrades,
+          tradeHistory: remote.tradeHistory,
+          live: true,
         };
-      }),
-    );
+      }
 
-    return enriched;
+      logger.warn(
+        { login: account.login, err: result.reason?.message },
+        "MT5 bridge fetch failed; falling back to CRM-stored balance",
+      );
+      return {
+        login: account.login,
+        type: account.type,
+        server: account.server,
+        leverage: account.leverage,
+        group: account.group,
+        createdAt: account.createdAt,
+        balance: Number(account.balance ?? 0),
+        equity: Number(account.equity ?? 0),
+        margin: undefined,
+        openTrades: undefined,
+        tradeHistory: undefined,
+        live: false,
+      };
+    });
   }
 
   async resetPasswordByAdmin(login, newPassword) {
