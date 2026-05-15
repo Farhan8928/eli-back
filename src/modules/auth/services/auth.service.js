@@ -36,7 +36,9 @@ class AuthService {
         email: user.email,
         // Token version derived from the user's last password change. The
         // auth middleware compares this to the live value so tokens stop
-        // working the moment the password rotates.
+        // working the moment the password rotates. Legacy users (no
+        // passwordChangedAt persisted) get pwdv: 0 here and pwdv: 0 from
+        // the live derivation — they match, so tokens stay valid.
         pwdv: user.passwordChangedAt
           ? Math.floor(new Date(user.passwordChangedAt).getTime() / 1000)
           : 0,

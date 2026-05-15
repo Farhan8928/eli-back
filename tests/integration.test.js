@@ -96,6 +96,50 @@ test("integration", async (t) => {
     },
   );
 
+  await t.test(
+    "legacy users without passwordChangedAt can use newly issued JWTs (regression)",
+    async () => {
+      // Reproduces a production incident: a Mongoose default of
+      // `() => new Date()` on passwordChangedAt re-ran on every legacy doc
+      // hydration without persisting, producing a moving target so the
+      // first follow-up request 401'd with TOKEN_INVALIDATED. Default must
+      // be null; legacy users get pwdv: 0 on both sides and tokens validate.
+      await resetDb();
+      const { User } = await import(
+        "../src/modules/users/model/user.model.js"
+      );
+      // Insert a user using the raw collection so passwordChangedAt is not
+      // populated — mirrors the shape of users that pre-date the field.
+      const bcrypt = (await import("bcryptjs")).default;
+      const hash = await bcrypt.hash("legacypw1", 4);
+      await User.collection.insertOne({
+        name: "Legacy",
+        email: "legacy@test.local",
+        password: hash,
+        role: "client",
+        kycStatus: "pending",
+        isEmailVerified: true,
+      });
+
+      const login = await request
+        .post("/api/v1/auth/login")
+        .send({ email: "legacy@test.local", password: "legacypw1" });
+      assert.equal(login.status, 200);
+
+      // Three back-to-back authenticated calls must all succeed; the
+      // production bug had this 401'ing with TOKEN_INVALIDATED.
+      const headers = { Authorization: `Bearer ${login.body.data.token}` };
+      for (let i = 0; i < 3; i += 1) {
+        const r = await request.get("/api/v1/users/me").set(headers);
+        assert.equal(
+          r.status,
+          200,
+          `attempt ${i + 1} expected 200, got ${r.status}: ${JSON.stringify(r.body)}`,
+        );
+      }
+    },
+  );
+
   // -----------------------------------------------------------------------
   // Forgot-password / reset-password flow
   // -----------------------------------------------------------------------

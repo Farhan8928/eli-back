@@ -126,10 +126,17 @@ const userSchema = new mongoose.Schema(
      * change, admin reset, password reset link). JWTs include this as the
      * `pwdv` claim so existing tokens stop working as soon as the password
      * rotates — protects against stolen tokens surviving a password change.
+     *
+     * IMPORTANT: default is `null`, never `() => new Date()`. A function
+     * default would re-run on every Mongoose hydration of a legacy doc
+     * that has no value persisted, producing a "rolling now" timestamp
+     * that invalidates tokens the instant they're issued. Legacy users
+     * just have `pwdv: 0` until they next change their password, which is
+     * the safe and intended behavior.
      */
     passwordChangedAt: {
       type: Date,
-      default: () => new Date(),
+      default: null,
     },
   },
   {
