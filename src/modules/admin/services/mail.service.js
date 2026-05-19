@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { ImapFlow } from "imapflow";
 import { SmtpConfig } from "../models/smtp.model.js";
 import { EmailerConfig } from "../models/emailer.model.js";
 import { logger } from "../../../common/utils/logger.js";
@@ -46,13 +47,62 @@ function sanitizeSubject(value) {
     .trim();
 }
 
+/**
+ * Render a nodemailer mailOptions object to a raw RFC822 buffer without
+ * actually sending it. We use this to feed an identical message into the
+ * IMAP APPEND call so the Sent folder shows the same MIME the recipient got.
+ */
+async function buildRawMessage(mailOptions) {
+  const streamTransport = nodemailer.createTransport({
+    streamTransport: true,
+    buffer: true,
+    newline: "unix",
+  });
+  const info = await streamTransport.sendMail(mailOptions);
+  return info.message; // Buffer
+}
+
+/**
+ * Try to find the IMAP Sent mailbox. Caller can override via
+ * `config.sentMailbox`; otherwise we walk the mailbox list looking for one
+ * with the `\Sent` special-use flag, then fall back to common names.
+ */
+async function resolveSentMailbox(client, override) {
+  if (override && override.trim()) return override.trim();
+
+  try {
+    const list = await client.list();
+    const bySpecialUse = list.find(
+      (m) =>
+        Array.isArray(m.specialUse)
+          ? m.specialUse.includes("\\Sent")
+          : m.specialUse === "\\Sent",
+    );
+    if (bySpecialUse?.path) return bySpecialUse.path;
+
+    const candidates = ["Sent", "INBOX.Sent", "Sent Items", "Sent Mail"];
+    for (const name of candidates) {
+      if (list.some((m) => m.path === name)) return name;
+    }
+  } catch (err) {
+    logger.warn(
+      { message: err.message },
+      "Could not list IMAP mailboxes; falling back to 'Sent'",
+    );
+  }
+  return "Sent";
+}
+
 class MailService {
-  async getTransporter() {
+  async getSmtpConfig() {
     const config = await SmtpConfig.findOne();
     if (!config) {
       throw new Error("SMTP Configuration not found in database");
     }
+    return config;
+  }
 
+  buildTransporter(config) {
     return nodemailer.createTransport({
       host: config.server,
       port: config.port,
@@ -63,6 +113,50 @@ class MailService {
       },
       connectionTimeout: config.timeoutMs || 5000,
     });
+  }
+
+  /**
+   * Append a successfully-sent message to the configured IMAP Sent folder so
+   * it surfaces in webmail (Hostinger, Roundcube, Outlook, etc.) like any
+   * human-sent email. Errors here are non-fatal — the recipient already got
+   * the mail; we only log if the archive copy fails.
+   */
+  async appendToSent(config, mailOptions) {
+    if (!config.imapHost) return; // IMAP not configured — opt-in feature.
+
+    let client;
+    try {
+      const raw = await buildRawMessage(mailOptions);
+
+      client = new ImapFlow({
+        host: config.imapHost,
+        port: config.imapPort || (config.imapSecure === false ? 143 : 993),
+        secure: config.imapSecure !== false,
+        auth: {
+          user: config.imapUsername || config.username,
+          pass: config.imapPassword || config.password,
+        },
+        logger: false,
+      });
+
+      await client.connect();
+      const mailbox = await resolveSentMailbox(client, config.sentMailbox);
+      await client.append(mailbox, raw, ["\\Seen"]);
+      logger.info(`Archived sent message to IMAP mailbox "${mailbox}"`);
+    } catch (err) {
+      logger.error(
+        { message: err.message },
+        "Failed to append sent message to IMAP Sent folder",
+      );
+    } finally {
+      if (client) {
+        try {
+          await client.logout();
+        } catch {
+          // ignore logout errors — connection may already be torn down
+        }
+      }
+    }
   }
 
   /**
@@ -88,7 +182,8 @@ class MailService {
         return false;
       }
 
-      const transporter = await this.getTransporter();
+      const config = await this.getSmtpConfig();
+      const transporter = this.buildTransporter(config);
 
       // Replace placeholders in subject and body. Body is HTML so we escape
       // every value; URL-shaped placeholders (key ending in _URL) pass
@@ -120,7 +215,7 @@ class MailService {
       subject = sanitizeSubject(subject);
 
       const mailOptions = {
-        from: (await SmtpConfig.findOne()).username,
+        from: config.username,
         to: toEmail,
         subject: subject,
         html: body,
@@ -132,6 +227,16 @@ class MailService {
       logger.info(
         `Email sent: ${emailerType} to ${toEmail}. MessageId: ${info.messageId}`,
       );
+
+      // Mirror to IMAP Sent folder so it shows up in Hostinger webmail.
+      // Reuse the exact mailOptions; if a Message-ID was assigned by SMTP,
+      // attach it so the archived copy matches what the recipient received.
+      await this.appendToSent(config, {
+        ...mailOptions,
+        messageId: info.messageId,
+        date: new Date(),
+      });
+
       return true;
     } catch (error) {
       logger.error(
